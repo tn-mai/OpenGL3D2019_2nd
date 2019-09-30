@@ -103,6 +103,12 @@ bool Window::Init(int w, int h, const char* title)
   const GLubyte* extensions = glGetString(GL_EXTENSIONS);
   std::cout << "Extensions: " << extensions << std::endl;
 
+  GLint maxVertexUniforms, maxFragmentUniforms;
+  glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &maxVertexUniforms);
+  std::cout << "GL_MAX_VERTEX_UNIFORM_VECTORS: " << maxVertexUniforms << "\n";
+  glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &maxFragmentUniforms);
+  std::cout << "GL_MAX_FRAGMENT_UNIFORM_VECTORS: " << maxFragmentUniforms << "\n";
+
   std::cout << "GLEW Version: " << glewGetString(GLEW_VERSION) << "\n";
 
   isInitialized = true;
