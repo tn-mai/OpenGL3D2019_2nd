@@ -131,28 +131,10 @@ GLuint BuildFromFile(const char* vsPath, const char* fsPath)
 }
 
 /**
-* ライトリストを初期化する.
-*
-* 全ての光源の明るさを０にする.
-*/
-void LightList::Init()
-{
-  ambient.color = glm::vec3(0);
-  directional.color = glm::vec3(0);
-  for (int i = 0; i < 8; ++i) {
-    point.color[i] = glm::vec3(0);
-  }
-  for (int i = 0; i < 4; ++i) {
-    spot.color[i] = glm::vec3(0);
-  }
-}
-
-/**
 * コンストラクタ
 */
 Program::Program()
 {
-  lights.Init();
 }
 
 /**
@@ -160,7 +142,6 @@ Program::Program()
 */
 Program::Program(GLuint programID)
 {
-  lights.Init();
   Reset(programID);
 }
 
@@ -189,27 +170,19 @@ void Program::Reset(GLuint programId)
   if (id == 0) {
     locMatMVP = -1;
     locMatModel = -1;
-    locPointLightPos = -1;
-    locPointLightCol = -1;
-    locDirLightDir = -1;
-    locDirLightCol = -1;
-    locAmbLightCol = -1;
-    locSpotLightDir = -1;
-    locSpotLightPos = -1;
-    locSpotLightCol = -1;
+    locPointLightCount = -1;
+    locPointLightIndex = -1;
+    locSpotLightCount = -1;
+    locSpotLightIndex = -1;
     return;
   }
 
   locMatMVP = glGetUniformLocation(id, "matMVP");
   locMatModel = glGetUniformLocation(id, "matModel");
-  locPointLightPos = glGetUniformLocation(id, "pointLight.position");
-  locPointLightCol = glGetUniformLocation(id, "pointLight.color");
-  locDirLightDir = glGetUniformLocation(id, "directionalLight.direction");
-  locDirLightCol = glGetUniformLocation(id, "directionalLight.color");
-  locAmbLightCol = glGetUniformLocation(id, "ambientLight.color");
-  locSpotLightPos = glGetUniformLocation(id, "spotLight.posAndInnerCutOff");
-  locSpotLightDir = glGetUniformLocation(id, "spotLight.dirAndCutOff");
-  locSpotLightCol = glGetUniformLocation(id, "spotLight.color");
+  locPointLightCount = glGetUniformLocation(id, "pointLightCount");
+  locPointLightIndex = glGetUniformLocation(id, "pointLightIndex");
+  locSpotLightCount = glGetUniformLocation(id, "spotLightCount");
+  locSpotLightIndex = glGetUniformLocation(id, "spotLightIndex");
 
   const GLint texColorLoc = glGetUniformLocation(id, "texColor");
   if (texColorLoc >= 0) {
@@ -253,30 +226,6 @@ void Program::BindTexture(GLuint unitNo, GLuint texId)
 }
 
 /**
-* 描画に使われるライトを設定する
-*
-* @param lights 設定する
-*/
-void Program::SetLightList(const LightList& lights)
-{
-  this->lights = lights;
-
-  //ライトの色情報をGPUメモリに転送する
-  if (locAmbLightCol >= 0) {
-    glUniform3fv(locAmbLightCol, 1, &lights.ambient.color.x);
-  }
-  if (locDirLightCol >= 0) {
-    glUniform3fv(locDirLightCol, 1, &lights.directional.color.x);
-  }
-  if (locPointLightCol >= 0) {
-    glUniform3fv(locPointLightCol, 8, &lights.point.color[0].x);
-  }
-  if (locSpotLightCol >= 0) {
-    glUniform3fv(locSpotLightCol, 4, &lights.spot.color[0].x);
-  }
-}
-
-/**
 * 描画に使われるビュー・プロジェクション行列を設定する.
 *
 * @param matVP 設定するビュー・プロジェクション行列.
@@ -298,6 +247,97 @@ void Program::SetModelMatrix(const glm::mat4& m)
 {
   if (locMatModel >= 0) {
     glUniformMatrix4fv(locMatModel, 1, GL_FALSE, &m[0][0]);
+  }
+}
+
+/**
+*
+* @param count      描画に使用するポイントライトの数(0～8).
+* @param indexList  描画に使用するポイントライト番号の配列.
+*/
+void Program::SetPointLightIndex(int count, const int* indexList)
+{
+  const int maxCount = 8;
+  if (count > maxCount) {
+    count = maxCount;
+    std::cerr << "[警告]" << __func__ << ": ライトの数に" << count <<
+      "が指定されました。最大値は" << maxCount << "です。\n";
+  }
+
+  const int maxIndex = 100;
+  for (int i = 0; i < count; ++i) {
+    if (indexList[i] < 0) {
+      std::cerr << "[警告]" << __func__ << ": " << i << "番目のライト番号に" <<
+        indexList[i] << "が指定されました。最小値は0です。\n";
+    } else if (indexList[i] > maxIndex) {
+      std::cerr << "[警告]" << __func__ << ": " << i << "番目のライト番号に" <<
+        indexList[i] << "が指定されました。最大値は" << maxIndex << "です。\n";
+    }
+  }
+
+  if (locPointLightCount >= 0) {
+    glUniform1i(locPointLightCount, count);
+    {
+      GLenum err = glGetError();
+      if (err != GL_NO_ERROR) {
+        std::cerr << "えらー\n";
+      }
+    }
+  }
+  if (locPointLightIndex >= 0 && count > 0) {
+    glUniform1iv(locPointLightIndex, count, indexList);
+  }
+  {
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+      std::cerr << "えらー\n";
+    }
+  }
+}
+
+/**
+* 描画に使われるライトを設定する
+*
+* @param count      描画に使用するスポットライトの数(0～8).
+* @param indexList  描画に使用するスポットライト番号の配列.
+*/
+void Program::SetSpotLightIndex(int count, const int* indexList)
+{
+  const int maxCount = 8;
+  if (count > maxCount) {
+    count = maxCount;
+    std::cerr << "[警告]" << __func__ << ": ライトの数に" << count <<
+      "が指定されました。最大値は" << maxCount << "です。\n";
+  }
+
+  const int maxIndex = 100;
+  for (int i = 0; i < count; ++i) {
+    if (indexList[i] < 0) {
+      std::cerr << "[警告]" << __func__ << ": " << i << "番目のライト番号に" <<
+        indexList[i] << "が指定されました。最小値は0です。\n";
+    } else if (indexList[i] > maxIndex) {
+      std::cerr << "[警告]" << __func__ << ": " << i << "番目のライト番号に" <<
+        indexList[i] << "が指定されました。最大値は" << maxIndex << "です。\n";
+    }
+  }
+
+  if (locSpotLightCount >= 0) {
+    glUniform1i(locSpotLightCount, count);
+  }
+  {
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+      std::cerr << "えらー\n";
+    }
+  }
+  if (locSpotLightIndex >= 0 && count > 0) {
+    glUniform1iv(locSpotLightIndex, count, indexList);
+  }
+  {
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+      std::cerr << "えらー\n";
+    }
   }
 }
 

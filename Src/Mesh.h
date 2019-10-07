@@ -112,6 +112,8 @@ public:
   bool LoadSkeletalMesh(const char* path);
   SkeletalMeshPtr GetSkeletalMesh(const char* meshName) const;
 
+  const Shader::ProgramPtr& GetStaticMeshShader() const { return progStaticMesh; }
+
 private:
   BufferObject vbo;
   BufferObject ibo;

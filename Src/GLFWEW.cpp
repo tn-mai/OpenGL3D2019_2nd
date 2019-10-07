@@ -103,11 +103,20 @@ bool Window::Init(int w, int h, const char* title)
   const GLubyte* extensions = glGetString(GL_EXTENSIONS);
   std::cout << "Extensions: " << extensions << std::endl;
 
-  GLint maxVertexUniforms, maxFragmentUniforms;
-  glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &maxVertexUniforms);
-  std::cout << "GL_MAX_VERTEX_UNIFORM_VECTORS: " << maxVertexUniforms << "\n";
-  glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &maxFragmentUniforms);
-  std::cout << "GL_MAX_FRAGMENT_UNIFORM_VECTORS: " << maxFragmentUniforms << "\n";
+#define PrintGLInfo(name) { \
+  GLint tmp; \
+  glGetIntegerv(name, &tmp); \
+  std::cout << #name ": " << tmp << "\n"; \
+} (void)0
+  PrintGLInfo(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS); // Å¬48(GL3.1)/96(GL4.3)
+  PrintGLInfo(GL_MAX_UNIFORM_BLOCK_SIZE); // Å¬16384=16kb
+  PrintGLInfo(GL_MAX_COMBINED_UNIFORM_BLOCKS); // Å¬36/70
+  PrintGLInfo(GL_MAX_VERTEX_UNIFORM_BLOCKS); // Å¬12/14
+  PrintGLInfo(GL_MAX_FRAGMENT_UNIFORM_BLOCKS); // Å¬12/14
+  PrintGLInfo(GL_MAX_UNIFORM_BUFFER_BINDINGS); // Å¬36/72
+  PrintGLInfo(GL_MAX_VERTEX_UNIFORM_VECTORS); // Å¬256/256
+  PrintGLInfo(GL_MAX_FRAGMENT_UNIFORM_VECTORS); // Å¬256/256
+#undef PrintGLInfo
 
   std::cout << "GLEW Version: " << glewGetString(GLEW_VERSION) << "\n";
 

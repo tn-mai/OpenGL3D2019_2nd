@@ -11,6 +11,7 @@
 #include "Actor.h"
 #include "PlayerActor.h"
 #include "JizoActor.h"
+#include "Light.h"
 #include <random>
 #include <vector>
 
@@ -56,6 +57,9 @@ private:
   ActorList enemies;
   ActorList trees;
   ActorList objects;
+
+  LightBuffer lightBuffer;
+  ActorList lights;
 };
 
 #endif // MAINGAMESCENE_H_INCLUDED

@@ -28,6 +28,9 @@
     <Filter Include="ソース ファイル\Audio">
       <UniqueIdentifier>{06874bc1-cedb-4b8f-a2c2-79ec1c003a98}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Light">
+      <UniqueIdentifier>{3b03b3b9-78e6-4bf2-815f-861ba8a5f0dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -105,6 +108,9 @@
     <ClInclude Include="Src\JizoActor.h">
       <Filter>ソース ファイル\Actor</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Light.h">
+      <Filter>ソース ファイル\Light</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -178,6 +184,9 @@
     </ClCompile>
     <ClCompile Include="Src\JizoActor.cpp">
       <Filter>ソース ファイル\Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Light.cpp">
+      <Filter>ソース ファイル\Light</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -55,9 +55,17 @@ public:
   virtual void Draw() override;
 
   const Mesh::FilePtr& GetMesh() const { return mesh; }
+  void SetPointLightList(const std::vector<int>& v);
+  void SetSpotLightList(const std::vector<int>& v);
 
 private:
   Mesh::FilePtr mesh;
+
+  int pointLightCount = 0;
+  int pointLightIndex[8] = { -1 };
+
+  int spotLightCount = 0;
+  int spotLightIndex[8] = { -1 };
 };
 using StaticMeshActorPtr = std::shared_ptr<StaticMeshActor>;
 
@@ -88,8 +96,17 @@ public:
   const_iterator begin() const { return actors.begin(); }
   const_iterator end() const { return actors.end(); }
 
+  std::vector<ActorPtr> FindNearbyActors(const glm::vec3& pos, float maxDistance) const;
+
 private:
   std::vector<ActorPtr> actors;
+
+  static const int mapGridSizeX = 10;
+  static const int mapGridSizeY = 10;
+  static const int sepalationSizeY = 20;
+  static const int sepalationSizeX = 20;
+  std::vector<ActorPtr> grid[sepalationSizeY][sepalationSizeX];
+  glm::ivec2 CalcMapIndex(const glm::vec3& pos) const;
 };
 
 using CollisionHandlerType =

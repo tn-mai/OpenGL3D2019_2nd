@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/constants.hpp>
 #include <random>
+#include <iostream>
 
 /**
 * 衝突を解決する.
@@ -77,11 +78,35 @@ bool MainGameScene::Initialize()
     return false;
   }
 
+  lightBuffer.Init(1);
+  lightBuffer.BindToShader(meshBuffer.GetStaticMeshShader());
+
   glm::vec3 startPos(100, 0, 100);
   startPos.y = heightMap.Height(startPos);
   player = std::make_shared<PlayerActor>(&heightMap, meshBuffer, startPos);
 
   rand.seed(0);
+
+  // ライトを配置
+  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.2f), glm::normalize(glm::vec3(1, -2, -1))));
+  for (int i = 0; i < 30; ++i) {
+    glm::vec3 color(1, 0.8f, 0.5f);
+    glm::vec3 position(0);
+    position.x = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
+    position.z = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
+    position.y = heightMap.Height(position) + 1;
+    lights.Add(std::make_shared<PointLightActor>("PointLight", color, position));
+  }
+  for (int i = 0; i < 30; ++i) {
+    glm::vec3 color(1, 2, 3);
+    glm::vec3 direction(glm::normalize(glm::vec3(1, -1, 1)));
+    glm::vec3 position(0);
+    position.x = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
+    position.z = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
+    position.y = heightMap.Height(position) + 2;
+    lights.Add(std::make_shared<SpotLightActor>("SpotLight", color, position, direction
+      , glm::radians(20.0f), glm::radians(15.0f)));
+  }
 
   // お地蔵様を配置
   for (int i = 0; i < 4; ++i) {
@@ -179,8 +204,8 @@ bool MainGameScene::Initialize()
     for (size_t i = 0; i < treeCount; ++i) {
       // 位置を(50,50)-(150,150)の範囲からランダムに選択.
       glm::vec3 position(0);
-      position.x = std::uniform_real_distribution<float>(50, 150)(rand);
-      position.z = std::uniform_real_distribution<float>(50, 150)(rand);
+      position.x = std::uniform_real_distribution<float>(80, 120)(rand);
+      position.z = std::uniform_real_distribution<float>(80, 120)(rand);
       position.y = heightMap.Height(position);
       // 向きをランダムに選択.
       glm::vec3 rotation(0);
@@ -230,6 +255,7 @@ void MainGameScene::Update(float deltaTime)
   enemies.Update(deltaTime);
   trees.Update(deltaTime);
   objects.Update(deltaTime);
+  lights.Update(deltaTime);
 
   DetectCollision(player, enemies);
   DetectCollision(player, trees);
@@ -269,6 +295,30 @@ void MainGameScene::Update(float deltaTime)
         mesh->Play("Wait");
       }
     }
+  }
+
+  // ライトの更新.
+  lightBuffer.Update(lights, glm::vec3(0.1f, 0.05f, 0.15f));
+  for (auto e : trees) {
+    const std::vector<ActorPtr> neighborhood = lights.FindNearbyActors(e->position, 20);
+    std::vector<int> pointLightIndex;
+    std::vector<int> spotLightIndex;
+    pointLightIndex.reserve(neighborhood.size());
+    spotLightIndex.reserve(neighborhood.size());
+    for (auto light : neighborhood) {
+      if (PointLightActorPtr p = std::dynamic_pointer_cast<PointLightActor>(light)) {
+        if (pointLightIndex.size() < 8) {
+          pointLightIndex.push_back(p->index);
+        }
+      } else if (SpotLightActorPtr p = std::dynamic_pointer_cast<SpotLightActor>(light)) {
+        if (spotLightIndex.size() < 8) {
+          spotLightIndex.push_back(p->index);
+        }
+      }
+    }
+    StaticMeshActorPtr p = std::static_pointer_cast<StaticMeshActor>(e);
+    p->SetPointLightList(pointLightIndex);
+    p->SetSpotLightList(spotLightIndex);
   }
 
   // 敵を全滅させたら目的達成フラグをtrueにする.
@@ -331,6 +381,9 @@ void MainGameScene::Render()
   const glm::vec2 screenSize(window.Width(), window.Height());
   spriteRenderer.Draw(screenSize);
 
+  lightBuffer.Upload();
+  lightBuffer.Bind();
+
   glEnable(GL_DEPTH_TEST);
 
   const glm::mat4 matView = glm::lookAt(camera.position, camera.target, camera.up);
@@ -345,7 +398,15 @@ void MainGameScene::Render()
   const glm::mat4 matModel = glm::translate(glm::mat4(1), cubePos);
   Mesh::Draw(meshBuffer.GetFile("Cube"), matModel);
 
-  Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1));
+  StaticMeshActorPtr pTerrain = std::make_shared<StaticMeshActor>(meshBuffer.GetFile("Terrain"), "Terrain", 100, glm::vec3(0), glm::vec3(0, 0, 0));
+  std::vector<int> tmp;
+  for (int i = 0; i < 8; ++i) {
+    tmp.push_back(i);
+  }
+  pTerrain->SetPointLightList(tmp);
+  pTerrain->SetSpotLightList(tmp);
+  pTerrain->Draw();
+//  Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1));
 
   player->Draw();
   enemies.Draw();
