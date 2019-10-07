@@ -114,6 +114,7 @@ layout修飾子の次にあるuniform修飾子は、変数がアプリケーシ�
 対して、ポイントライトやスポットライトは様々な用途で利用され、明るさもさまざまですから、たくさん用意できるようにしたわけです。また、このような光源は、モデルごとに影響を受けるライトが違ってきます。そこで、影響を受けるライトの個数と番号を受け取るようにしています。これがpointLightCount, pointLightIndex, spotLightCount, spotLightIndexの4つのユニフォーム変数の役割です。影響を受けるライトの個数はポイントライトとスポットライトでそれぞれ最大8個としました。影響するライトの個数少なすぎると、近くにライトがたくさんあっても反映されないため不自然になりますし、逆に多すぎると、今度は計算に時間がかかりすぎるからです。
 
 >［補足］環境光は「GI(ぐろーばる・いるみねーしょん、大域照明)」という照明を大胆に近似したものです。現代的なゲームではより高度なテクニックによって置き換えられていますが、そのようなテクニックを習得するにはさまざまな前提知識が必要となり、本講義の範囲を超えてしまうため扱いません。興味のある方は「Sparse Voxel Octree」「Precomputed Radiance Transfer」「Light Propagation Volume」「Photon Mapping」などで検索してみてください。
+
 >［補足］ライトの座標や色にvec3型ではなくvec4型を使っているのには理由があります。これらのパラメータで実際に使われるのはX,Y,ZあるいはR,G,Bの３要素だけなので、本来はvec3型を使うべきです。しかし、std140メモリ・レイアウトでは、vec3の代わりにvec4を使うことが推奨されています。これはOpenGLの発展における歴史的な事情によります。過去にさまざまな組織がstd140メモリ・レイアウトを実装していく中で、vec3型の扱い一致しない時期があったようです。そのため、移植性を考慮するならstd140ではvec3は一切使用しないほうが安全です。なお、floatやvec2については問題はなかったようです。現代のハードウェアとデバイス・ドライバでは「vec3の直後に見えないfloat型を追加してvec4と同じレイアウトにする」というルールが守られているので、vec3でも問題が起きることはまずありませんが、結局のところvec3にしたところでvec4と同じだけのメモリ領域を使ってしまうので、安全側に倒すほうがよいでしょう。
 
 ### 1.4 ライトの計算プログラムを追加する
@@ -385,7 +386,7 @@ UBOとシェーダー・プログラムは、GLコンテキストにある「バ
 UniformBuffer::Create関数は、UBOを作成する関数です。2個のUBOを作成しているのは「ダブル・バッファ」というテクニックを使うためです。CPUとGPUは並列に動作します。もしGPUが参照している途中のデータを、CPU側でうっかり買い替えてしまうと、おかしな画像が描かれてしまうことがあります。そこで、CPUとGPUが見てるUBOを分離し、CPUがすべてのデータを更新したUBOをGPUから参照してもらい、次はGPUが参照していないほうのUBOを更新する、というように、2つのバッファを用意して、交互に使うようにします。これが「ダブル・バッファ」というテクニックです。currentUboIndex(かれんと・ゆーびーおー・いんでっくす)という変数は、CPUがどちらのUBOを利用するかを決めるために使います。
 
 <div style="text-align: center;width: 100%;">
-<img src="images/01_ubo_binding_point.png" style="width:60%; margin-left:auto; margin-right:auto"/>
+<img src="images/01_ubo_binding_point.png" style="width:100%; margin-left:auto; margin-right:auto"/>
 </div>
 
 BindToShader(ばいんど・とぅ・しぇーだー)関数は、UBOとシェーダー・プログラムを結びつけます。Init関数の定義の下に、次のプログラムを追加してください。
@@ -449,7 +450,8 @@ LightBuffer::Update関数はUBOに設定するためのデータを作成しま�
 +  int pointLightCount = 0;
 +  int spotLightCount = 0;
 +  for (auto i = al.begin(); i != al.end(); ++i) {
-+    if (DirectionalLightActorPtr p = std::dynamic_pointer_cast<DirectionalLightActor>(*i)) {
++    if (DirectionalLightActorPtr p =
++      std::dynamic_pointer_cast<DirectionalLightActor>(*i)) {
 +      data.directionalLight.color = glm::vec4(p->color, 0);
 +      data.directionalLight.direction = glm::vec4(p->direction, 0);
 +    } else if (PointLightActorPtr p = std::dynamic_pointer_cast<PointLightActor>(*i)) {
@@ -922,16 +924,18 @@ Actor.cppを開き、次のようにヘッダファイルのインクルード�
 }
 +
 +/**
-+* 指定された座標に対応するアクターマップのインデックスを取得する.
++* 指定された座標に対応する格子のインデックスを取得する.
 +*
 +* @param pos インデックスの元になる位置.
 +*
-+* @return posに対応するアクターマップのインデックス.
++* @return posに対応する格子のインデックス.
 +*/
 +glm::ivec2 ActorList::CalcMapIndex(const glm::vec3& pos) const
 +{
-+  const int x = std::max(0, std::min(sepalationSizeX - 1, static_cast<int>(pos.x / mapGridSizeX)));
-+  const int y = std::max(0, std::min(sepalationSizeY - 1, static_cast<int>(pos.z / mapGridSizeY)));
++  const int x = std::max(0,
++    std::min(sepalationSizeX - 1, static_cast<int>(pos.x / mapGridSizeX)));
++  const int y = std::max(0,
++    std::min(sepalationSizeY - 1, static_cast<int>(pos.z / mapGridSizeY)));
 +  return glm::ivec2(x, y);
 +}
 
@@ -939,7 +943,7 @@ Actor.cppを開き、次のようにヘッダファイルのインクルード�
  * アクターの状態を更新する.
 ```
 
-この関数は、指定された座標がアクターマップのどの位置に当たるかを計算します。基本的には座標を格子の大きさで割るだけです。座標によっては格子の範囲外になる可能性があるので、格子の最小値(=0)と最大値(=sepalationSizeX - 1, sepalationSizeY - 1)の範囲に限定するようにしておきます。
+この関数は、指定された座標が格子のどの位置に当たるかを計算します。基本的には座標を格子の大きさで割るだけです。座標によっては格子の範囲外になる可能性があるので、格子の最小値(=0)と最大値(=sepalationSizeX - 1, sepalationSizeY - 1)の範囲に限定するようにしておきます。std::maxは２つの引数のうち大きい方を返します。これによって最小値を指定できます。std::minは２つの引数のうち小さい方を返します。同様に、最大値を指定するために使うことができます。std::maxとstd::minを使って最小値、最大値を制限する手法は便利なので覚えておいてください。
 
 次に、格子にアクターを割り当てる機能を追加しましょう。ActorList::Update関数に、次のプログラムを追加してください。
 
@@ -984,14 +988,16 @@ Actor.cppを開き、次のようにヘッダファイルのインクルード�
 +*
 +* @return Actor::positionがposから半径maxDistance以内にあるアクターの配列.
 +*/
-+std::vector<ActorPtr> ActorList::FindNearbyActors(const glm::vec3& pos, float maxDistance) const
++std::vector<ActorPtr> ActorList::FindNearbyActors(
++  const glm::vec3& pos, float maxDistance) const
 +{
 +  std::vector<std::pair<float, ActorPtr>> buffer;
 +  buffer.reserve(1000);
 +
 +  const glm::ivec2 mapIndex = CalcMapIndex(pos);
 +  const glm::ivec2 min = glm::max(mapIndex - 1, 0);
-+  const glm::ivec2 max = glm::min(mapIndex + 1, glm::ivec2(sepalationSizeX - 1, sepalationSizeY - 1));
++  const glm::ivec2 max = glm::min(
++    mapIndex + 1, glm::ivec2(sepalationSizeX - 1, sepalationSizeY - 1));
 +  for (int y = min.y; y <= max.y; ++y) {
 +    for (int x = min.x; x <= max.x; ++x) {
 +      const std::vector<ActorPtr>& list = grid[y][x];
@@ -1130,7 +1136,8 @@ Actor.cppを開き、次のようにヘッダファイルのインクルード�
 +        if (pointLightIndex.size() < 8) {
 +          pointLightIndex.push_back(p->index);
 +        }
-+      } else if (SpotLightActorPtr p = std::dynamic_pointer_cast<SpotLightActor>(light)) {
++      } else if (
++        SpotLightActorPtr p = std::dynamic_pointer_cast<SpotLightActor>(light)) {
 +        if (spotLightIndex.size() < 8) {
 +          spotLightIndex.push_back(p->index);
 +        }
@@ -1162,9 +1169,15 @@ Actor.cppを開き、次のようにヘッダファイルのインクルード�
 
 これで全てのプログラムが完成しました。ビルドして実行してください。いくつかの木にライトが反映されていたら成功です。
 
+<div style="border:solid 1px; background:#f0e4cd; margin: 1rem; padding: 1rem; border-radius: 10px">
+<strong>［課題01］</strong><br>
+ポイントライトと同じようにして、スポットライトを追加してください。
+</div>
 
+<div style="page-break-after: always"></div>
 
+## C言語練習問題
 
-
-
-
+1. トランプのカードの組を表すデータ構造を作成してください。ジョーカーは考慮しなくて構いません。
+2. ジョーカーを除いた52枚のカードを表す配列を定義し、それをシャッフルしてください。
+3. シャッフルした配列の0～5番目のカードの内容を表示してください。
