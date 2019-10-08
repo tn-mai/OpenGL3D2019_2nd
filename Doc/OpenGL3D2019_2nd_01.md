@@ -150,7 +150,7 @@ layout修飾子の次にあるuniform修飾子は、変数がアプリケーシ�
 +    float cosTheta = clamp(dot(normal, lightDir), 0.0, 1.0);
 +    float intensity = 1.0 / (1.0 + dot(lightVector, lightVector));
 +    float spotCosTheta = dot(lightDir, -spotLight[id].dirAndCutOff.xyz);
-+    float cutOff = smoothstep(spotLight[id].dirAndCutOff.w,i
++    float cutOff = smoothstep(spotLight[id].dirAndCutOff.w,
 +      spotLight[id].posAndInnerCutOff.w, spotCosTheta);
 +    lightColor += spotLight[id].color.rgb * cosTheta * intensity * cutOff;
 +  }
@@ -617,10 +617,13 @@ Shader.cppを開き、次のようにライトに関するプログラムを削�
 -  }
 -}
 
-/**
-* コンストラクタ
-*/
-Program::Program()
+ /**
+ * コンストラクタ
+ */
+ Program::Program()
+ {
+-  lights.Init();
+ }
 ```
 
 ```diff
