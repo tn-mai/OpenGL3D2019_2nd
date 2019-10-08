@@ -1,6 +1,8 @@
 /**
 * @file Light.h
 */
+#ifndef LIGHT_H_INCLUDED
+#define LIGHT_H_INCLUDED
 #include <GL/glew.h>
 #include "Shader.h"
 #include "UniformBuffer.h"
@@ -147,3 +149,5 @@ private:
   UniformBufferPtr ubo[2];
   int currentUboIndex = 0; ///< UBOダブルバッファの書き込み側インデックス.
 };
+
+#endif // LIGHT_H_INCLUDED

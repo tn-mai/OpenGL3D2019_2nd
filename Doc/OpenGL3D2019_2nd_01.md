@@ -175,6 +175,8 @@ Srcフォルダに「Light.h」というファイルを追加して、次のプ�
 /**
 * @file Light.h
 */
+#ifndef LIGHT_H_INCLUDED
+#define LIGHT_H_INCLUDED
 #include <GL/glew.h>
 #include "Shader.h"
 #include "UniformBuffer.h"
@@ -227,6 +229,8 @@ struct LightUniformBlock
   PointLight pointLight[100];
   SpotLight spotLight[100];
 };
+
+#endif // LIGHT_H_INCLUDED
 ```
 
 C++のプログラムでは、LightUniformBlockは単なる構造体であって、インターフェイス・ブロックではない点に注意してください。
