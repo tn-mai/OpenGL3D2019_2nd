@@ -130,29 +130,29 @@ layout修飾子の次にあるuniform修飾子は、変数がアプリケーシ�
 -  vec3 vLight = normalize(vec3(1, -2, -1));
 -  float power = max(dot(normalize(inNormal), -vLight), 0.0) + 0.2;
 +  vec3 normal = normalize(inNormal);
-+  vec3 lightColor = lights.ambient.color.rgb;
-+  float power = max(dot(normal, -lights.directional.direction.xyz), 0.0);
-+  lightColor += lights.directional.color.rgb * power;
++  vec3 lightColor = ambientLight.color.rgb;
++  float power = max(dot(normal, -directionalLight.direction.xyz), 0.0);
++  lightColor += directionalLight.color.rgb * power;
 +
 +  for (int i = 0; i < pointLightCount; ++i) {
 +    int id = pointLightIndex[i];
-+    vec3 lightVector = lights.point[id].position.xyz - inPosition;
++    vec3 lightVector = pointLight[id].position.xyz - inPosition;
 +    vec3 lightDir = normalize(lightVector);
 +    float cosTheta = clamp(dot(normal, lightDir), 0.0, 1.0);
 +    float intensity = 1.0 / (1.0 + dot(lightVector, lightVector));
-+    lightColor += lights.point[id].color.rgb * cosTheta * intensity;
++    lightColor += pointLight[id].color.rgb * cosTheta * intensity;
 +  }
 +
 +  for (int i = 0; i < spotLightCount; ++i) {
 +    int id = spotLightIndex[i];
-+    vec3 lightVector = lights.spot[id].posAndInnerCutOff.xyz - inPosition;
++    vec3 lightVector = spotLight[id].posAndInnerCutOff.xyz - inPosition;
 +    vec3 lightDir = normalize(lightVector);
 +    float cosTheta = clamp(dot(normal, lightDir), 0.0, 1.0);
 +    float intensity = 1.0 / (1.0 + dot(lightVector, lightVector));
-+    float spotCosTheta = dot(lightDir, -lights.spot[id].dirAndCutOff.xyz);
-+    float cutOff = smoothstep(lights.spot[id].dirAndCutOff.w,i
-+      lights.spot[id].posAndInnerCutOff.w, spotCosTheta);
-+    lightColor += lights.spot[id].color.rgb * cosTheta * intensity * cutOff;
++    float spotCosTheta = dot(lightDir, -spotLight[id].dirAndCutOff.xyz);
++    float cutOff = smoothstep(spotLight[id].dirAndCutOff.w,i
++      spotLight[id].posAndInnerCutOff.w, spotCosTheta);
++    lightColor += spotLight[id].color.rgb * cosTheta * intensity * cutOff;
 +  }
 +
    fragColor = texture(texColor, inTexCoord);
@@ -262,13 +262,12 @@ C++のプログラムでは、LightUniformBlockは単なる構造体であって
 +{
 +public:
 +  PointLightActor(const std::string& name, const glm::vec3& c,
-+    const glm::vec3& p) : Actor(name, 1, p), color(c), direction(d)
++    const glm::vec3& p) : Actor(name, 1, p), color(c)
 +  {}
 +  ~PointLightActor() = default;
 +
 +public:
 +  glm::vec3 color;
-+  glm::vec3 direction;
 +  int index = -1;
 +};
 +using PointLightActorPtr = std::shared_ptr<PointLightActor>;
