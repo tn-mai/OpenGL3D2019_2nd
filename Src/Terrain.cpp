@@ -44,6 +44,14 @@ bool HeightMap::LoadFromFile(const char* path, float scale, float baseLevel)
       heights[offsetY * size.x + x] = (color.r - baseLevel) * scale;
     }
   }
+
+  for (int i = 0; i < 2; ++i) {
+    lightIndex[i] = Texture::Buffer::Create(GL_RGBA8I, size.x * size.y * 4, nullptr, GL_DYNAMIC_DRAW);
+    if (!lightIndex[i]) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -162,13 +170,57 @@ bool HeightMap::CreateMesh(
     meshBuffer.CreatePrimitive(indices.size(), GL_UNSIGNED_INT, iOffset, vOffset);
   Mesh::Material m = meshBuffer.CreateMaterial(glm::vec4(1), nullptr);
   if (texName) {
-    m.texture = Texture::Image2D::Create(texName);
+    m.texture[0] = Texture::Image2D::Create(texName);
   } else {
-    m.texture = Texture::Image2D::Create(name.c_str());
+    m.texture[0] = Texture::Image2D::Create(name.c_str());
   }
+  m.texture[0] = Texture::Image2D::Create("Res/Terrain_Sand.tga");
+  m.texture[1] = Texture::Image2D::Create("Res/Terrain_Stone.tga");
+  m.texture[2] = Texture::Image2D::Create("Res/Terrain_Plant.tga");
+  m.texture[4] = Texture::Image2D::Create("Res/Vegetation.tga");
+  m.texture[5] = lightIndex[0];
+  m.texture[6] = lightIndex[1];
+  m.program = meshBuffer.GetTerrainShader();
   meshBuffer.AddMesh(meshName, p, m);
 
   return true;
+}
+
+/**
+* ライトインデックスを更新する.
+*
+* @param lights ライトアクターのリスト.
+*/
+void HeightMap::UpdateLightIndex(const ActorList& lights)
+{
+  std::vector<glm::i8vec4> pointLightIndex;
+  std::vector<glm::i8vec4> spotLightIndex;
+  pointLightIndex.resize(size.x * size.y, glm::i8vec4(-1));
+  spotLightIndex.resize(size.x * size.y, glm::i8vec4(-1));
+  for (int y = 0; y < size.y; ++y) {
+    for (int x = 0; x < size.x; ++x) {
+      std::vector<ActorPtr> neiborhood = lights.FindNearbyActors(glm::vec3(x + 0.5f, 0, y + 0.5f), 20);
+      int pointLightCount = 0;
+      glm::i8vec4& pointLight = pointLightIndex[y * size.x + x];
+      int spotLightCount = 0;
+      glm::i8vec4& spotLight = spotLightIndex[y * size.x + x];
+      for (auto light : neiborhood) {
+        if (PointLightActorPtr p = std::dynamic_pointer_cast<PointLightActor>(light)) {
+          if (pointLightCount < 4) {
+            pointLight[pointLightCount] = p->index;
+            ++pointLightCount;
+          }
+        } else if (SpotLightActorPtr p = std::dynamic_pointer_cast<SpotLightActor>(light)) {
+          if (spotLightCount < 4) {
+            spotLight[spotLightCount] = p->index;
+            ++spotLightCount;
+          }
+        }
+      }
+    }
+  }
+  lightIndex[0]->BufferSubData(0, pointLightIndex.size() * 4, pointLightIndex.data());
+  lightIndex[1]->BufferSubData(0, spotLightIndex.size() * 4, spotLightIndex.data());
 }
 
 /**

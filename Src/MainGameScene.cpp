@@ -80,6 +80,7 @@ bool MainGameScene::Initialize()
 
   lightBuffer.Init(1);
   lightBuffer.BindToShader(meshBuffer.GetStaticMeshShader());
+  lightBuffer.BindToShader(meshBuffer.GetTerrainShader());
 
   glm::vec3 startPos(100, 0, 100);
   startPos.y = heightMap.Height(startPos);
@@ -88,12 +89,14 @@ bool MainGameScene::Initialize()
   rand.seed(0);
 
   // ライトを配置
-  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.2f), glm::normalize(glm::vec3(1, -2, -1))));
+  const int lightRangeMin = 80;
+  const int lightRangeMax = 120;
+  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.15f, 0.25f, 0.2f), glm::normalize(glm::vec3(1, -2, -1))));
   for (int i = 0; i < 30; ++i) {
     glm::vec3 color(1, 0.8f, 0.5f);
     glm::vec3 position(0);
-    position.x = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
-    position.z = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
+    position.x = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
+    position.z = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
     position.y = heightMap.Height(position) + 1;
     lights.Add(std::make_shared<PointLightActor>("PointLight", color, position));
   }
@@ -101,12 +104,15 @@ bool MainGameScene::Initialize()
     glm::vec3 color(1, 2, 3);
     glm::vec3 direction(glm::normalize(glm::vec3(1, -1, 1)));
     glm::vec3 position(0);
-    position.x = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
-    position.z = static_cast<float>(std::uniform_int_distribution<>(80, 120)(rand));
+    position.x = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
+    position.z = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
     position.y = heightMap.Height(position) + 2;
     lights.Add(std::make_shared<SpotLightActor>("SpotLight", color, position, direction
       , glm::radians(20.0f), glm::radians(15.0f)));
   }
+  lights.Update(0);
+  lightBuffer.Update(lights, glm::vec3(0.1f, 0.05f, 0.15f));
+  heightMap.UpdateLightIndex(lights);
 
   // お地蔵様を配置
   for (int i = 0; i < 4; ++i) {
@@ -398,6 +404,7 @@ void MainGameScene::Render()
   const glm::mat4 matModel = glm::translate(glm::mat4(1), cubePos);
   Mesh::Draw(meshBuffer.GetFile("Cube"), matModel);
 
+#if 0
   StaticMeshActorPtr pTerrain = std::make_shared<StaticMeshActor>(meshBuffer.GetFile("Terrain"), "Terrain", 100, glm::vec3(0), glm::vec3(0, 0, 0));
   std::vector<int> tmp;
   for (int i = 0; i < 8; ++i) {
@@ -406,7 +413,9 @@ void MainGameScene::Render()
   pTerrain->SetPointLightList(tmp);
   pTerrain->SetSpotLightList(tmp);
   pTerrain->Draw();
-//  Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1));
+#else
+  Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1));
+#endif
 
   player->Draw();
   enemies.Draw();

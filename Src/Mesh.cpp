@@ -193,6 +193,11 @@ bool Buffer::Init(GLsizeiptr vboSize, GLsizeiptr iboSize)
   }
   SkeletalAnimation::BindUniformBlock(progSkeletalMesh);
 
+  progTerrain = Shader::Program::Create("Res/Terrain.vert", "Res/Terrain.frag");
+  if (progTerrain->IsNull()) {
+    return false;
+  }
+
   vboEnd = 0;
   iboEnd = 0;
   files.reserve(100);
@@ -288,7 +293,7 @@ Material Buffer::CreateMaterial(
 {
   Material m;
   m.baseColor = color;
-  m.texture = texture;
+  m.texture[0] = texture;
   m.program = progStaticMesh;
   m.progSkeletalMesh = progSkeletalMesh;
   return m;
@@ -597,6 +602,8 @@ void Buffer::SetViewProjectionMatrix(const glm::mat4& matVP) const
   progStaticMesh->SetViewProjectionMatrix(matVP);
   progSkeletalMesh->Use();
   progSkeletalMesh->SetViewProjectionMatrix(matVP);
+  progTerrain->Use();
+  progTerrain->SetViewProjectionMatrix(matVP);
   glUseProgram(0);
 }
 
@@ -622,18 +629,25 @@ void Draw(const FilePtr& file, const glm::mat4& matM)
       glActiveTexture(GL_TEXTURE0);
 
       // テクスチャがあるときは、そのテクスチャIDを設定する. ないときは0を設定する.
-      if (m.texture) {
-        glBindTexture(GL_TEXTURE_2D, m.texture->Get());
-      } else {
-        glBindTexture(GL_TEXTURE_2D, 0);
+      for (int i = 0; i < sizeof(m.texture)/sizeof(m.texture[0]); ++i) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        if (m.texture[i]) {
+          glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
+        } else {
+          glBindTexture(GL_TEXTURE_1D, 0);
+        }
+      }
+      const GLenum error = glGetError();
+      if (error) {
+        std::cout << "[エラー]" << std::hex << error << "\n";
       }
 
       glDrawElementsBaseVertex(p.mode, p.count, p.type, p.indices, p.baseVertex);
       p.vao->Unbind();
     }
   }
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, 0);
+//  glActiveTexture(GL_TEXTURE0);
+//  glBindTexture(GL_TEXTURE_2D, 0);
   glUseProgram(0);
 }
 

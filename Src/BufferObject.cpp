@@ -44,7 +44,7 @@ bool BufferObject::Create(
 */
 bool BufferObject::BufferSubData(GLintptr offset, GLsizeiptr size, const GLvoid* data)
 {
-  if (offset + size >= this->size) {
+  if (offset + size > this->size) {
     std::cerr << "[警告] " << __func__ << ": 転送先領域がバッファサイズを越えています.\n"
       << "  buffer size:" << this->size << " offset:" << offset << " size:" << size << "\n";
     if (offset >= this->size) {

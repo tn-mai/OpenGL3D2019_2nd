@@ -271,4 +271,52 @@ Image2DPtr Image2D::Create(const char* path)
   return std::make_shared<Image2D>(LoadImage2D(path));
 }
 
+/**
+* バッファ・テクスチャを作成する.
+*
+* @param internalFormat バッファのデータ形式.
+* @param size           バッファのサイズ.
+* @param data           バッファに転送するデータ.
+* @param usage          バッファのアクセスタイプ.
+*
+* @return 作成したテクスチャオブジェクト.
+*/
+BufferPtr Buffer::Create(GLenum internalFormat, GLsizeiptr size,
+  const GLvoid* data, GLenum usage)
+{
+  std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>();
+  if (!buffer->bo.Create(GL_TEXTURE_BUFFER, size, data, usage)) {
+    return false;
+  }
+  glGenTextures(1, &buffer->id);
+  glBindTexture(GL_TEXTURE_BUFFER, buffer->id);
+  glTexBuffer(GL_TEXTURE_BUFFER, internalFormat, buffer->bo.Id());
+  glBindTexture(GL_TEXTURE_BUFFER, 0);
+
+  return buffer;
+}
+
+/**
+* デストラクタ.
+*/
+Buffer::~Buffer()
+{
+  glDeleteTextures(1, &id);
+}
+
+/**
+* バッファにデータを転送する.
+*
+* @param offset 転送開始位置(バイト単位).
+* @param size   転送するバイト数.
+* @param data   転送するデータへのポインタ.
+*
+* @retval true  転送成功.
+* @retval false 転送失敗.
+*/
+bool Buffer::BufferSubData(GLintptr offset, GLsizeiptr size, const GLvoid* data)
+{
+  return bo.BufferSubData(offset, size, data);
+}
+
 } // namespace Texture

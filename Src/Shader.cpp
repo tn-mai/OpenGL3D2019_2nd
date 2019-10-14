@@ -184,11 +184,40 @@ void Program::Reset(GLuint programId)
   locSpotLightCount = glGetUniformLocation(id, "spotLightCount");
   locSpotLightIndex = glGetUniformLocation(id, "spotLightIndex");
 
+  if (GLenum error = glGetError()) {
+    std::cout << "[エラー]" << std::hex << error << "\n";
+  }
+
+  glUseProgram(id);
   const GLint texColorLoc = glGetUniformLocation(id, "texColor");
   if (texColorLoc >= 0) {
-    glUseProgram(id);
     glUniform1i(texColorLoc, 0);
-    glUseProgram(0);
+  }
+  for (GLint i = 0; i < 8; ++i) {
+    std::string name("texColor[");
+    name += static_cast<char>('0' + i);
+    name += ']';
+    const GLint texColorLoc = glGetUniformLocation(id, name.c_str());
+    if (texColorLoc >= 0) {
+      glUniform1i(texColorLoc, i);
+    }
+  }
+
+  const GLint texTerrainLoc = glGetUniformLocation(id, "texTerrain");
+  if (texTerrainLoc >= 0) {
+    glUniform1i(texTerrainLoc, 4);
+  }
+  const GLint locTexPointLightIndex = glGetUniformLocation(id, "texPointLightIndex");
+  if (locTexPointLightIndex >= 0) {
+    glUniform1i(locTexPointLightIndex, 5);
+  }
+  const GLint locTexSpotLightIndex = glGetUniformLocation(id, "texSpotLightIndex");;
+  if (locTexSpotLightIndex >= 0) {
+    glUniform1i(locTexSpotLightIndex, 6);
+  }
+  glUseProgram(0);
+  if (GLenum error = glGetError()) {
+    std::cout << "[エラー]" << std::hex << error << "\n";
   }
 }
 

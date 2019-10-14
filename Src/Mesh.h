@@ -45,7 +45,7 @@ struct Vertex
 struct Material
 {
   glm::vec4 baseColor = glm::vec4(1);
-  Texture::Image2DPtr texture;
+  Texture::InterfacePtr texture[8];
   Shader::ProgramPtr program;
   Shader::ProgramPtr progSkeletalMesh; // スケルタルメッシュ用のシェーダー.
 };
@@ -113,6 +113,7 @@ public:
   SkeletalMeshPtr GetSkeletalMesh(const char* meshName) const;
 
   const Shader::ProgramPtr& GetStaticMeshShader() const { return progStaticMesh; }
+  const Shader::ProgramPtr& GetTerrainShader() const { return progTerrain; }
 
 private:
   BufferObject vbo;
@@ -130,6 +131,8 @@ private:
   };
   std::unordered_map<std::string, MeshIndex> meshes;
   std::unordered_map<std::string, ExtendedFilePtr> extendedFiles;
+
+  Shader::ProgramPtr progTerrain;
 };
 
 void Draw(const FilePtr&, const glm::mat4& matM);
