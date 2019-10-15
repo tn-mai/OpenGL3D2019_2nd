@@ -596,6 +596,22 @@ private:
  };
 ```
 
+次にMesh.cppを開き、Mesh::Draw関数を次のように変更してください。
+
+```diff
+      for (int i = 0; i < sizeof(m.texture) / sizeof(m.texture[0]); ++i) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        if (m.texture[i]) {
+-         glBindTexture(GL_TEXTURE_2D, m.texture[i]->Get());
++         glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
+        } else {
+          glBindTexture(GL_TEXTURE_2D, 0);
+        }
+      }
+```
+
+さらに、これと全く同じ修正を、SkeletalMesh.cppにあるSkeletalMesh::Draw関数にも行ってください。この変更によって、テクスチャの種類に応じて適切なバインディング・ポイントが設定されるようになります。
+
 ### 2.9 地形シェーダーを修正する
 
 続いて、シェーダー・プログラムを修正していきます。地形にライトを当てるために、ライトのインデックスが必要なのはもちろんですが、そもそもピクセルがどの1x1mブロックに属しているかという情報がなければインデックスを選びようがありません。これは結局、座標変換前の頂点座標にほかならないわけですが、現在のフラグメントシェーダーにはこの情報が伝わっていません。そこで、頂点の座標をTerrain.vertからTerrain.fragに送るようにします。
