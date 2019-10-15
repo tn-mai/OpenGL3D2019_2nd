@@ -169,17 +169,12 @@ bool HeightMap::CreateMesh(
   Mesh::Primitive p =
     meshBuffer.CreatePrimitive(indices.size(), GL_UNSIGNED_INT, iOffset, vOffset);
   Mesh::Material m = meshBuffer.CreateMaterial(glm::vec4(1), nullptr);
-  if (texName) {
-    m.texture[0] = Texture::Image2D::Create(texName);
-  } else {
-    m.texture[0] = Texture::Image2D::Create(name.c_str());
-  }
-  m.texture[0] = Texture::Image2D::Create("Res/Terrain_Sand.tga");
-  m.texture[1] = Texture::Image2D::Create("Res/Terrain_Stone.tga");
-  m.texture[2] = Texture::Image2D::Create("Res/Terrain_Plant.tga");
-  m.texture[4] = Texture::Image2D::Create("Res/Vegetation.tga");
-  m.texture[5] = lightIndex[0];
-  m.texture[6] = lightIndex[1];
+  m.texture[0] = Texture::Image2D::Create("Res/Vegetation.tga");
+  m.texture[1] = Texture::Image2D::Create("Res/Terrain_Sand.tga");
+  m.texture[2] = Texture::Image2D::Create("Res/Terrain_Stone.tga");
+  m.texture[3] = Texture::Image2D::Create("Res/Terrain_Plant.tga");
+  m.texture[4] = lightIndex[0];
+  m.texture[5] = lightIndex[1];
   m.program = meshBuffer.GetTerrainShader();
   meshBuffer.AddMesh(meshName, p, m);
 

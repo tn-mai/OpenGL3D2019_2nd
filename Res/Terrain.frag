@@ -10,8 +10,7 @@ layout(location=3) in vec2 inIndex;
 
 out vec4 fragColor;
 
-uniform sampler2D texColor[3];
-uniform sampler2D texTerrain;
+uniform sampler2D texColorArray[4];
 uniform isamplerBuffer texPointLightIndex; // use texelFetch
 uniform isamplerBuffer texSpotLightIndex; // use texelFetch
 
@@ -88,11 +87,11 @@ void main()
     }
   }
 
-  vec4 terrain = texture(texTerrain, inTexCoord);
-  vec2 texCoord = inTexCoord * 10;
-  fragColor.rgb = texture(texColor[0], texCoord).rgb * max(0, 1.0 - terrain.r - terrain.g);
-  fragColor.rgb += texture(texColor[1], texCoord).rgb * terrain.r;
-  fragColor.rgb += texture(texColor[2], texCoord).rgb * terrain.g;
+  vec4 terrain = texture(texColorArray[0], inTexCoord);
+  vec2 uv = inTexCoord * 10;
+  fragColor.rgb = texture(texColorArray[1], uv).rgb * max(0, 1.0 - terrain.r - terrain.g);
+  fragColor.rgb += texture(texColorArray[2], uv).rgb * terrain.r;
+  fragColor.rgb += texture(texColorArray[3], uv).rgb * terrain.g;
   fragColor.a = 1;
 
   fragColor.rgb *= lightColor;
