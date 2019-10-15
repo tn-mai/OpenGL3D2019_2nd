@@ -115,7 +115,7 @@ Material構造体の変更に合わせるために、いくつかのプログラ
 -    glUseProgram(0);
    }
 +  for (GLint i = 0; i < 8; ++i) {
-+    std::string name("texColor[");
++    std::string name("texColorArray[");
 +    name += static_cast<char>('0' + i);
 +    name += ']';
 +    const GLint texColorLoc = glGetUniformLocation(id, name.c_str());
@@ -132,13 +132,15 @@ Material構造体の変更に合わせるために、いくつかのプログラ
 
 OpenGLコンテキストには「テクスチャ・イメージ・ユニット」という機能があります。テクスチャサンプラーとテクスチャはこのユニットを介して結び付けられます(ユニフォーム・ブロックと同様の仕組みです)。
 
-ユニフォーム変数の配列は、実際には個々に独立した変数になります。例えば`uniform sampler2D texColor[3]`と定義した場合、実際には`texColor[0]`、`texColor[1]`、`texColor[2]`という変数を定義したとして扱われるのです。こうなっているのは、OpenGLがシェーダーをビルドするときに未使用の変数を除去してもよいことになっているからです。つまり、たとえ8要素の配列を定義したとしても、シェーダー・プログラムで使っているのがそのうちの3つだけだった場合、残りの5つは除去されてロケーション番号が割り当てられない可能性があるわけです。
+ユニフォーム変数の配列は、実際には個々に独立した変数になります。例えば`uniform sampler2D texColorArray[3]`と定義した場合、実際には`texColorArray[0]`, `texColorArray[1]`, `texColorArray[2]`という変数を定義したとして扱われるのです。こうなっているのは、OpenGLがシェーダーをビルドするときに未使用の変数を除去してもよいことになっているからです。つまり、たとえ8要素の配列を定義したとしても、シェーダー・プログラムで使っているのがそのうちの3つだけだった場合、残りの5つは除去されてロケーション番号が割り当てられない可能性があるわけです。
 
 これはテクスチャを割り当てる側としてははなはだ不便です。というのも、デバッグのために変数を一時的に使わないようにしただけでも、ロケーション番号が変わってしまうかもしれないからです。そこで、上記のプログラムでは配列の個々の変数名を作成してロケーション番号を取得し、常に配列のインデックスと一致するテクスチャ・イメージ・ユニットの番号を割り当てるようにしています。
 
 なお、glUseProgramをif文の外に出したのは、今回のプログラムではシェーダー・プログラムをバインドするタイミングが不定になるので、いっそ外で常にバインドした方が簡潔に書けると考えたからです。
 
 とにかく、これでシェーダー・プログラムの準備はおしまいです。
+
+>［補足］配列変数とそうでない変数で名前を変えているのは、一部のグラフィックドライバがこの２つを区別しない場合があったためです。このようなドライバでは、例えば`texColor`という配列ではない変数があったとき、glGetUniformLocation関数に`texColor[0]`や`texColor[1]`といった名前を指定すると`texColor`と同じロケーション番号が返されます。つまり、配列ではないのに配列のような(間違った)結果を返しているわけです。これは、配列とそうでない変数の名前を分けることで対応できます。
 
 ### 1.3 地形用のシェーダーを作成する
 
@@ -187,7 +189,7 @@ void main()
  out vec4 fragColor;
 
 -uniform sampler2D texColor;
-+uniform sampler2D texColor[4];
++uniform sampler2D texColorArray[4];
 
  uniform int pointLightCount;
  uniform int pointLightIndex[8];
@@ -204,19 +206,19 @@ void main()
 
 -  fragColor = texture(texColor, inTexCoord);
 +  // 地形テクスチャを合成.
-+  vec4 ratio = texture(texColor[0], inTexCoord);
++  vec4 ratio = texture(texColorArray[0], inTexCoord);
 +  float baseRatio = max(0.0, 1.0 - ratio.r - ratio.g);
 +  vec2 uv= inTexCoord * 10.0;
-+  fragColor.rgb = texture(texColor[1], uv).rgb * baseRatio;
-+  fragColor.rgb += texture(texColor[2], uv).rgb * ratio.r;
-+  fragColor.rgb += texture(texColor[3], uv).rgb * ratio.g;
++  fragColor.rgb = texture(texColorArray[1], uv).rgb * baseRatio;
++  fragColor.rgb += texture(texColorArray[2], uv).rgb * ratio.r;
++  fragColor.rgb += texture(texColorArray[3], uv).rgb * ratio.g;
 +  fragColor.a = 1.0;
 +
    fragColor.rgb *= lightColor;
  }
 ```
 
-このシェーダー・プログラムでは、`texColor[0]`に設定されたテクスチャの赤と緑の要素を合成比率とみなして、残りのテクスチャの色を合成しています。地形用のシェーダー・プログラムはこれで完成です。
+このシェーダー・プログラムでは、`texColorArray[0]`に設定されたテクスチャの赤と緑の要素を合成比率とみなして、残りのテクスチャの色を合成しています。地形用のシェーダー・プログラムはこれで完成です。
 
 ### 1.4 地形用のシェーダー・プログラムを読み込む
 
@@ -636,7 +638,7 @@ Terrain.vertを開き、次のプログラムを追加してください。
 
  out vec4 fragColor;
 
- uniform sampler2D texColor[4];
+ uniform sampler2D texColorArray[4];
 +uniform isamplerBuffer texPointLightIndex;
 +uniform isamplerBuffer texSpotLightIndex;
 +
