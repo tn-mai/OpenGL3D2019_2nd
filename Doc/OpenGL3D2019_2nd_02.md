@@ -114,7 +114,7 @@ Material構造体の変更に合わせるために、いくつかのプログラ
      glUniform1i(texColorLoc, 0);
 -    glUseProgram(0);
    }
-+  for (GLint i = 0; i < 8; ++i) {
++  for (int i = 0; i < sizeof(m.texture) / sizeof(m.texture[0]); ++i) {
 +    std::string name("texColorArray[");
 +    name += static_cast<char>('0' + i);
 +    name += ']';
