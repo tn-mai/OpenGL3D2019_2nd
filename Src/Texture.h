@@ -7,6 +7,7 @@
 #include "BufferObject.h"
 #include <glm/glm.hpp>
 #include <vector>
+#include <string>
 #include <memory>
 
 namespace Texture {
@@ -15,6 +16,8 @@ class Interface;
 using InterfacePtr = std::shared_ptr<Interface>;
 class Image2D;
 using Image2DPtr = std::shared_ptr<Image2D>;
+class Image2DArray;
+using Image2DArrayPtr = std::shared_ptr<Image2DArray>;
 class Buffer;
 using BufferPtr = std::shared_ptr<Buffer>;
 
@@ -70,6 +73,30 @@ public:
   virtual GLint Width() const override { return width; }
   virtual GLint Height() const override { return height; }
   virtual GLenum Target() const override { return GL_TEXTURE_2D; }
+
+private:
+  GLuint id = 0;
+  GLint width = 0;
+  GLint height = 0;
+};
+
+/**
+* 2D配列テクスチャ
+*/
+class Image2DArray : public Interface
+{
+public:
+  static Image2DArrayPtr Create(const std::vector<std::string>&);
+  Image2DArray() = default;
+  explicit Image2DArray(GLuint texId);
+  virtual ~Image2DArray();
+
+  void Reset(GLuint texId);
+  virtual bool IsNull() const override;
+  virtual GLuint Get() const override;
+  virtual GLint Width() const override { return width; }
+  virtual GLint Height() const override { return height; }
+  virtual GLenum Target() const override { return GL_TEXTURE_2D_ARRAY; }
 
 private:
   GLuint id = 0;
