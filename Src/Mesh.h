@@ -45,7 +45,7 @@ struct Vertex
 struct Material
 {
   glm::vec4 baseColor = glm::vec4(1);
-  Texture::InterfacePtr texture[8];
+  Texture::InterfacePtr texture[16];
   Shader::ProgramPtr program;
   Shader::ProgramPtr progSkeletalMesh; // スケルタルメッシュ用のシェーダー.
 };

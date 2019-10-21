@@ -175,6 +175,9 @@ bool HeightMap::CreateMesh(
   m.texture[3] = Texture::Image2D::Create("Res/Terrain_Plant.tga");
   m.texture[4] = lightIndex[0];
   m.texture[5] = lightIndex[1];
+  m.texture[8] = Texture::Image2D::Create("Res/Terrain_Soil_Normal.tga");
+  m.texture[9] = Texture::Image2D::Create("Res/Terrain_Rock_Normal.tga");
+  m.texture[10] = Texture::Image2D::Create("Res/Terrain_Plant_Normal.tga");
   m.program = meshBuffer.GetTerrainShader();
   meshBuffer.AddMesh(meshName, p, m);
 

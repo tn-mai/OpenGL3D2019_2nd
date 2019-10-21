@@ -5,12 +5,13 @@
 
 layout(location=0) in vec3 inPosition;
 layout(location=1) in vec2 inTexCoord;
-layout(location=2) in vec3 inNormal;
-layout(location=3) in vec2 inIndex;
+layout(location=2) in vec3 inTBN[3];
+layout(location=5) in vec3 inRawPosition;
 
 out vec4 fragColor;
 
 uniform sampler2D texColorArray[4];
+uniform sampler2D texNormalArray[3];
 uniform isamplerBuffer texPointLightIndex; // use texelFetch
 uniform isamplerBuffer texSpotLightIndex; // use texelFetch
 
@@ -48,19 +49,37 @@ layout(std140) uniform LightUniformBlock
   SpotLight spotLight[100];
 };
 
+const float shininess = 2;
+const float normFactor = (shininess + 2) * (1.0 / (2.0 * 3.1415926));
+
 /**
 * Terrain fragment shader.
 */
 void main()
 {
-  vec3 normal = normalize(inNormal);
+  vec4 ratio = texture(texColorArray[0], inTexCoord);
+  float baseRatio = max(0, 1.0 - ratio.r - ratio.g);
+  vec2 uv = inTexCoord * 10;
+  fragColor.rgb = texture(texColorArray[1], uv).rgb * baseRatio;
+  fragColor.rgb += texture(texColorArray[2], uv).rgb * ratio.r;
+  fragColor.rgb += texture(texColorArray[3], uv).rgb * ratio.g;
+  fragColor.a = 1;
+
+  mat3 matTBN = mat3(normalize(inTBN[0]), normalize(inTBN[1]), normalize(inTBN[2]));
+  vec3 normal = matTBN * (texture(texNormalArray[0], uv).rgb * 2.0 - 1.0) * baseRatio;
+  normal += matTBN * (texture(texNormalArray[1], uv).rgb * 2.0 - 1.0) * ratio.r;
+  normal += matTBN * (texture(texNormalArray[2], uv).rgb * 2.0 - 1.0) * ratio.g;
+  normal = normalize(normal);
 
   vec3 lightColor = ambientLight.color.rgb;
 
   float power = max(dot(normal, -directionalLight.direction.xyz), 0.0);
   lightColor += directionalLight.color.rgb * power;
 
-  int offset = int(inIndex.y) * mapSize.x + int(inIndex.x);
+  vec3 eyeVector = normalize(-vec3(0, 50, 25));
+  lightColor += directionalLight.color.rgb * pow(max(dot(eyeVector, reflect(-directionalLight.direction.xyz, normal)), 0), shininess) * power * normFactor;
+
+  int offset = int(inRawPosition.z) * mapSize.x + int(inRawPosition.x);
   ivec4 pointLightIndex = texelFetch(texPointLightIndex, offset);
   for (int i = 0; i < 4; ++i) {
     int id = pointLightIndex[i];
@@ -86,13 +105,6 @@ void main()
       lightColor += spotLight[id].color.rgb * cosTheta * intensity * cutOff;
     }
   }
-
-  vec4 terrain = texture(texColorArray[0], inTexCoord);
-  vec2 uv = inTexCoord * 10;
-  fragColor.rgb = texture(texColorArray[1], uv).rgb * max(0, 1.0 - terrain.r - terrain.g);
-  fragColor.rgb += texture(texColorArray[2], uv).rgb * terrain.r;
-  fragColor.rgb += texture(texColorArray[3], uv).rgb * terrain.g;
-  fragColor.a = 1;
 
   fragColor.rgb *= lightColor;
 }
