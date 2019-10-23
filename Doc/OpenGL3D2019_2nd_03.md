@@ -49,7 +49,7 @@ DDSの特徴は、一定の圧縮性能を保ちつつ、GPUが直接扱える�
 4x4ピクセルは次のような圧縮データに変換されて格納されます。
 
 <div style="text-align: center;width: 100%;">
-<img src="images/03_dds_blocK_format.png" style="width:60%; margin-left:auto; margin-right:auto"/>
+<img src="images/03_dds_block_format.png" style="width:60%; margin-left:auto; margin-right:auto"/>
 <div style="white-space: pre;">[圧縮データの形式]</div>
 </div>
 
