@@ -690,6 +690,12 @@ DirectXは左手座標系でテクスチャ座標原点は左上です。対し�
 
 >［補足］当初、このおかしなキューブマップの仕様は、当初はNVIDIA社が自社GPU専用の拡張仕様としてOpenGLに持ち込まれました。そのときは拡張仕様ということで問題はなかったのです。この仕様はOpenGL用の調整が不要なため、DirectX用のGPUをメインに作っていた他社にとっても都合がよいものでした。結果として、大きな反対もなくそのまま標準仕様に昇格してしまったのです。
 
+水面のノーマルマップの作成にはPhotoShopやGIMPなどの画像作成ツールが利用できます。あるいは以下の画像をダウンロードして使ってください。
+
+`https://github.com/tn-mai/OpenGL3D2019_2nd/blob/master/Res/Terrain_Water_Normal.tga`
+
+水面のノーマルマップは`Terrain_Water_Normal.tga`という名前を付けてResフォルダにコピーしてください。
+
 ### 1.14 水面を設定する
 
 それでは水面を表示してみましょう。MainGameScene.cppを開き、MainGameScene::Initialize関数に次のプログラムを追加してください。
