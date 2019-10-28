@@ -23,6 +23,7 @@ namespace GLFWEW {
 		void InitTimer();
 		void UpdateTimer();
 		double DeltaTime() const;
+    double Time() const;
 		bool IsKeyPressed(int key) const;
     const GamePad& GetGamePad() const;
     int Width() const { return width; }

@@ -20,6 +20,8 @@ class Image2DArray;
 using Image2DArrayPtr = std::shared_ptr<Image2DArray>;
 class Buffer;
 using BufferPtr = std::shared_ptr<Buffer>;
+class Cube;
+using CubePtr = std::shared_ptr<Cube>;
 
 /**
 * 画像データ.
@@ -130,6 +132,27 @@ private:
   BufferObject bo;
 };
 
+/**
+* キューブマップ・テクスチャ.
+*/
+class Cube : public Interface
+{
+public:
+  static CubePtr Create(const std::vector<std::string>&);
+  Cube() = default;
+  virtual ~Cube();
+
+  virtual bool IsNull() const override { return !id; }
+  virtual GLuint Get() const override { return id; }
+  virtual GLint Width() const override { return width; }
+  virtual GLint Height() const override { return height; }
+  virtual GLenum Target() const override { return GL_TEXTURE_CUBE_MAP; }
+
+private:
+  GLuint id = 0;
+  GLint width = 0;
+  GLint height = 0;
+};
 
 } // namespace Texture
 

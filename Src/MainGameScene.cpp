@@ -77,10 +77,14 @@ bool MainGameScene::Initialize()
   if (!heightMap.CreateMesh(meshBuffer, "Terrain")) {
     return false;
   }
+  if (!heightMap.CreateWaterMesh(meshBuffer, "Water", -15)) {
+    return false;
+  }
 
   lightBuffer.Init(1);
   lightBuffer.BindToShader(meshBuffer.GetStaticMeshShader());
   lightBuffer.BindToShader(meshBuffer.GetTerrainShader());
+  lightBuffer.BindToShader(meshBuffer.GetWaterShader());
 
   glm::vec3 startPos(100, 0, 100);
   startPos.y = heightMap.Height(startPos);
@@ -391,6 +395,8 @@ void MainGameScene::Render()
   lightBuffer.Bind();
 
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
   const glm::mat4 matView = glm::lookAt(camera.position, camera.target, camera.up);
   const float aspectRatio =
@@ -398,6 +404,8 @@ void MainGameScene::Render()
   const glm::mat4 matProj =
     glm::perspective(glm::radians(30.0f), aspectRatio, 1.0f, 1000.0f);
   meshBuffer.SetViewProjectionMatrix(matProj * matView);
+  meshBuffer.SetCameraPosition(camera.position);
+  meshBuffer.SetTime(window.Time());
 
   glm::vec3 cubePos(100, 0, 100);
   cubePos.y = heightMap.Height(cubePos);
@@ -427,6 +435,8 @@ void MainGameScene::Render()
   const glm::mat4 matTreeModel =
     glm::translate(glm::mat4(1), treePos) * glm::scale(glm::mat4(1), glm::vec3(3));
   Mesh::Draw(meshBuffer.GetFile("Res/red_pine_tree.gltf"), matTreeModel);
+
+  Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1));
 
   fontRenderer.Draw(screenSize);
 }

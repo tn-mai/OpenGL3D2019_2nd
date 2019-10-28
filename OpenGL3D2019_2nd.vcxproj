@@ -224,6 +224,7 @@
     <None Include="Res\Sprite.vert" />
     <None Include="Res\Terrain.frag" />
     <None Include="Res\Terrain.vert" />
+    <None Include="Res\Water.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

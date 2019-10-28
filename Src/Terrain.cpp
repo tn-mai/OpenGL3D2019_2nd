@@ -185,6 +185,77 @@ bool HeightMap::CreateMesh(
 }
 
 /**
+* 水面メッシュを作成する.
+*
+* @param meshBuffer メッシュ作成先となるメッシュバッファ.
+* @param meshName   作成するメッシュの名前.
+* @param waterLevel 水面の高さ.
+*
+* @retval true  メッシュの作成に成功.
+* @retval false メッシュを作成できなかった.
+*/
+bool HeightMap::CreateWaterMesh(Mesh::Buffer& meshBuffer, const char* meshName, float waterLevel) const
+{
+  // 頂点データを作成.
+  Mesh::Vertex v;
+  std::vector<Mesh::Vertex> vertices;
+  vertices.reserve(size.x * size.y);
+  for (int z = 0; z < size.y; ++z) {
+    for (int x = 0; x < size.x; ++x) {
+      // テクスチャ座標は上がプラスなので、向きを逆にする必要がある.
+      v.position = glm::vec3(x, waterLevel, z);
+      v.texCoord = glm::vec2(x, (size.y - 1) - z) / (glm::vec2(size) - 1.0f);
+      v.normal = glm::vec3(0, 1, 0);
+      vertices.push_back(v);
+    }
+  }
+  const size_t vOffset =
+    meshBuffer.AddVertexData(vertices.data(), vertices.size() * sizeof(Mesh::Vertex));
+
+  // インデックスデータを作成.
+  std::vector<GLuint> indices;
+  indices.reserve(size.x * size.y);
+  for (int z = 0; z < size.y - 1; ++z) {
+    for (int x = 0; x < size.x - 1; ++x) {
+      const GLuint a = (z + 1) * size.x + x;
+      const GLuint b = (z + 1) * size.x + (x + 1);
+      const GLuint c = z       * size.x + (x + 1);
+      const GLuint d = z       * size.x + x;
+      indices.push_back(a);
+      indices.push_back(b);
+      indices.push_back(c);
+
+      indices.push_back(c);
+      indices.push_back(d);
+      indices.push_back(a);
+    }
+  }
+  const size_t iOffset =
+    meshBuffer.AddIndexData(indices.data(), indices.size() * sizeof(GLuint));
+
+  // 頂点データとインデックスデータからメッシュを作成.
+  Mesh::Primitive p =
+    meshBuffer.CreatePrimitive(indices.size(), GL_UNSIGNED_INT, iOffset, vOffset);
+  Mesh::Material m = meshBuffer.CreateMaterial(glm::vec4(1), nullptr);
+  m.texture[4] = lightIndex[0];
+  m.texture[5] = lightIndex[1];
+  std::vector<std::string> cubeMapFiles;
+  cubeMapFiles.reserve(6);
+  cubeMapFiles.push_back("Res/cubemap_px.tga");
+  cubeMapFiles.push_back("Res/cubemap_nx.tga");
+  cubeMapFiles.push_back("Res/cubemap_py.tga");
+  cubeMapFiles.push_back("Res/cubemap_ny.tga");
+  cubeMapFiles.push_back("Res/cubemap_pz.tga");
+  cubeMapFiles.push_back("Res/cubemap_nz.tga");
+  m.texture[6] = Texture::Cube::Create(cubeMapFiles);
+  m.texture[8] = Texture::Image2D::Create("Res/Terrain_Water_Normal.tga");
+  m.program = meshBuffer.GetWaterShader();
+  meshBuffer.AddMesh(meshName, p, m);
+
+  return true;
+}
+
+/**
 * ライトインデックスを更新する.
 *
 * @param lights ライトアクターのリスト.

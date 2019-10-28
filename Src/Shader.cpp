@@ -183,6 +183,8 @@ void Program::Reset(GLuint programId)
   locPointLightIndex = glGetUniformLocation(id, "pointLightIndex");
   locSpotLightCount = glGetUniformLocation(id, "spotLightCount");
   locSpotLightIndex = glGetUniformLocation(id, "spotLightIndex");
+  locCameraPosition = glGetUniformLocation(id, "cameraPosition");
+  locTime = glGetUniformLocation(id, "time");
 
   if (GLenum error = glGetError()) {
     std::cout << "[エラー]" << std::hex << error << "\n";
@@ -216,9 +218,13 @@ void Program::Reset(GLuint programId)
   if (locTexPointLightIndex >= 0) {
     glUniform1i(locTexPointLightIndex, 4);
   }
-  const GLint locTexSpotLightIndex = glGetUniformLocation(id, "texSpotLightIndex");;
+  const GLint locTexSpotLightIndex = glGetUniformLocation(id, "texSpotLightIndex");
   if (locTexSpotLightIndex >= 0) {
     glUniform1i(locTexSpotLightIndex, 5);
+  }
+  const GLint locTexCubeMap = glGetUniformLocation(id, "texCubeMap");
+  if (locTexCubeMap >= 0) {
+    glUniform1i(locTexCubeMap, 6);
   }
   glUseProgram(0);
   if (GLenum error = glGetError()) {
@@ -372,6 +378,30 @@ void Program::SetSpotLightIndex(int count, const int* indexList)
     if (err != GL_NO_ERROR) {
       std::cerr << "えらー\n";
     }
+  }
+}
+
+/**
+* カメラ座標を設定する.
+*
+* @param pos カメラ座標.
+*/
+void Program::SetCameraPosition(const glm::vec3& pos)
+{
+  if (locCameraPosition >= 0) {
+    glUniform3fv(locCameraPosition, 1, &pos.x);
+  }
+}
+
+/**
+* 総経過時間を設定する.
+*
+* @param time 総経過時間.
+*/
+void Program::SetTime(float time)
+{
+  if (locTime >= 0) {
+    glUniform1f(locTime, time);
   }
 }
 

@@ -105,6 +105,8 @@ public:
   bool LoadMesh(const char* path);
   FilePtr GetFile(const char* name) const;
   void SetViewProjectionMatrix(const glm::mat4&) const;
+  void SetCameraPosition(const glm::vec3&) const;
+  void SetTime(double) const;
 
   void AddCube(const char* name);
 
@@ -114,6 +116,7 @@ public:
 
   const Shader::ProgramPtr& GetStaticMeshShader() const { return progStaticMesh; }
   const Shader::ProgramPtr& GetTerrainShader() const { return progTerrain; }
+  const Shader::ProgramPtr& GetWaterShader() const { return progWater; }
 
 private:
   BufferObject vbo;
@@ -122,6 +125,8 @@ private:
   GLintptr iboEnd = 0;
   std::unordered_map<std::string, FilePtr> files;
   Shader::ProgramPtr progStaticMesh;
+  Shader::ProgramPtr progTerrain;
+  Shader::ProgramPtr progWater;
 
   // スケルタル・アニメーションに対応したメッシュを保持するメンバ変数.
   Shader::ProgramPtr progSkeletalMesh;
@@ -131,8 +136,6 @@ private:
   };
   std::unordered_map<std::string, MeshIndex> meshes;
   std::unordered_map<std::string, ExtendedFilePtr> extendedFiles;
-
-  Shader::ProgramPtr progTerrain;
 };
 
 void Draw(const FilePtr&, const glm::mat4& matM);
