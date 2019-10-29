@@ -48,6 +48,19 @@
 キューブマッピング用テクスチャ(以後は「キューブマップ」と呼びます)は、6枚の画像をひとつのテクスチャとして登録する作業が必要です。そこで、この作業を行うキューブマップ用のクラスを追加します。Texture.hを開き、次のプログラムを追加してください。
 
 ```diff
+ #include <glm/glm.hpp>
+ #include <vector>
+ #include <memory>
++#include <string>
+
+ namespace Texture {
+
+ class Interface;
+ using InterfacePtr = std::shared_ptr<Interface>;
+ class Image2D;
+ using Image2DPtr = std::shared_ptr<Image2D>;
+ class Image2DArray;
+ using Image2DArrayPtr = std::shared_ptr<Image2DArray>;
  class Buffer;
  using BufferPtr = std::shared_ptr<Buffer>;
 +class Cube;
