@@ -244,7 +244,7 @@ const ivec2 mapSize = ivec2(200, 200);
 -  fragColor.rgb += texture(texColorArray[2], uv).rgb * ratio.r;
 -  fragColor.rgb += texture(texColorArray[3], uv).rgb * ratio.g;
 -  fragColor.a = 1;
-+  vec4 waterColor = vece(0.15, 0.20, 0.3, 0.6);
++  vec4 waterColor = vec4(0.15, 0.20, 0.3, 0.6);
 +  fragColor = waterColor;
 
    mat3 matTBN = mat3(normalize(inTBN[0]), normalize(inTBN[1]), normalize(inTBN[2]));
