@@ -818,14 +818,19 @@ DirectXは左手座標系でテクスチャ座標原点は左上です。対し�
    vec3 reflectionVector = 2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
    vec3 environmentColor = texture(texCubeMap, reflectionVector).rgb;
 -  fragColor.rgb += environmentColor;
-+  float f = GetFresnelFactor(cameraVector, normal);
-+  fragColor.rgb += environmentColor * f;
++  float brightness = 8.0;
 +  float opacity = 0.6;
++  float f = GetFresnelFactor(cameraVector, normal);
++  fragColor.rgb += environmentColor * f * brightness;
 +  fragColor.a = clamp(opacity + f * (1.0 - opacity), 0.0, 1.0);
  }
 ```
 
+上記のプログラムで追加した「brightness(ぶらいとねす)」変数は、反射光の明るさを表しています。フレネル係数を導入すると反射される光の強さがかなり少なくなってしまうので、キューブマップの明るさを8倍するようにしてみました。また、「opacity(おぱしてぃ」変数は、水の不透明度を表しています。この数値を小さくすると、水底がよく見えるようになります。
+
 プログラムが書けたらビルドして実行してください。水面の透明度が高くなり、水底がよく見えていたら成功です。
+
+>［補足］水の色や反射光の明るさ、不透明度は実際の水面に見えるように適当に決めたものです。これらの値は自由に変更することができます。例えば泥水を表現したい場合、水の色を茶色にして、不透明度を高くします。これらの変数をユニフォーム変数にして、C++プログラムから変更できるようにしても面白いでしょう。
 
 <div style="page-break-after: always"></div>
 
