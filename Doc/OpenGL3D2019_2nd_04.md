@@ -254,14 +254,17 @@ const ivec2 mapSize = ivec2(200, 200);
 -  normal = normalize(normal);
 +  vec4 uv = inTexCoord.xyxy * vec4(11.0, 11.0, 5.0, 5.0);
 +  vec4 scroll = vec4(-0.01, -0.01, 0.005, 0.005) * time;
-+  vec3 normalS = matTBN * (texture(texNormalArray[0], uv.xy + scroll.xy).rgb * 2.0 - 1.0);
-+  vec3 normalL = matTBN * (texture(texNormalArray[0], uv.zw + scroll.zw).rgb * 2.0 - 1.0);
-+  vec3 normal = normalize(normalS * 0.5 + normalL);
++  vec3 normalS = texture(texNormalArray[0], uv.xy + scroll.xy).rgb * 2.0 - 1.0;
++  vec3 normalL = texture(texNormalArray[0], uv.zw + scroll.zw).rgb * 2.0 - 1.0;
++  vec3 normal =  normalS * 0.5 + normalL;
++  normal = normalize(matTBN *normal);
 
    vec3 lightColor = ambientLight.color.rgb;
 ```
 
-ノーマルマップは一枚だけ使います。ただし、同じノーマルマップを縮尺を変えて2回読み込むようにしています。縮尺の大きいほうはおおまかな凹凸を表し、小さいほうは細かな凹凸を表します。縮尺を変えて重ね合わせることでより複雑な凹凸を生み出すことができるわけです。また、1枚だけだと繰り返しによるパターンが見えてしまいますが、重ね合わせによってパターンを見えにくくすることができます。縮尺の最小公倍数がパターンの長さになるからです。ただし、縮尺が違いすぎると不自然に見えてしまうので注意してください。
+ノーマルマップは一枚だけ使います。ただし、同じノーマルマップを縮尺を変えて2回読み込むようにしています。縮尺の大きいほうはおおまかな凹凸を表し、小さいほうは細かな凹凸を表します。縮尺を変えて重ね合わせることでより複雑な凹凸を生み出すことができるわけです。このとき、縮尺の小さい方の影響力を小さくすると見た目が自然になります。ですから、normalS変数に0.5を掛けているわけです。
+
+また、1枚だけだと繰り返しによるパターンが見えてしまいますが、重ね合わせることでパターンが見えにくくなります。縮尺の最小公倍数がパターンの長さになるからです。ただし、縮尺が違いすぎると不自然に見えてしまうので注意してください。
 
 time変数はノーマルマップをスクロールさせるために使用します。あとでtime変数には経過時間を設定しますが、そうすることで、時間が進むごとにノーマルマップが少しずつずれて表示されます。また、縮尺ごとにずらす方向と速度を変えているので、ノーマルマップの重なり方が時間によって変化し、それがアニメーションになります。
 
