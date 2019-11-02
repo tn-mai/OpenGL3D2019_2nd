@@ -80,9 +80,10 @@ void main()
   mat3 matTBN = mat3(normalize(inTBN[0]), normalize(inTBN[1]), normalize(inTBN[2]));
   vec4 uv = inTexCoord.xyxy * vec4(11.0, 11.0, 5.0, 5.0);
   vec4 scroll = vec4(-0.01, -0.01, 0.005, 0.005) * time;
-  vec3 normalS = matTBN * (texture(texNormalArray[0], uv.xy + scroll.xy).rgb * 2.0 - 1.0);
-  vec3 normalL = matTBN * (texture(texNormalArray[0], uv.zw + scroll.zw).rgb * 2.0 - 1.0);
-  vec3 normal = normalize(normalS * 0.5 + normalL);
+  vec3 normalS = texture(texNormalArray[0], uv.xy + scroll.xy).rgb * 2.0 - 1.0;
+  vec3 normalL = texture(texNormalArray[0], uv.zw + scroll.zw).rgb * 2.0 - 1.0;
+  vec3 normal = normalS * 0.5 + normalL;
+  normal = normalize(matTBN * normal);
 
   vec3 lightColor = ambientLight.color.rgb;
 
@@ -125,7 +126,7 @@ void main()
   vec3 reflectionVector = 2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
   vec3 environmentColor = texture(texCubeMap, reflectionVector).rgb;
   float f = GetFresnelFactor(cameraVector, normal);
-  float brightness = 8.0;
+  float brightness = 1.0;
   float opacity = 0.6;
   fragColor.rgb += environmentColor * f * brightness;
   fragColor.a = clamp(opacity + f * (1.0 - opacity), 0.0, 1.0);
