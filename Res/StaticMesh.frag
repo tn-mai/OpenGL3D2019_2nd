@@ -54,6 +54,11 @@ layout(std140) uniform LightUniformBlock
 */
 void main()
 {
+  fragColor = texture(texColor, inTexCoord);
+  if (fragColor.a < 0.1) {
+    discard;
+  }
+
   vec3 normal = normalize(inNormal);
 
   vec3 lightColor = ambientLight.color.rgb;
@@ -81,6 +86,5 @@ void main()
     lightColor += spotLight[id].color.rgb * cosTheta * intensity * cutOff;
   }
 
-  fragColor = texture(texColor, inTexCoord);
   fragColor.rgb *= lightColor;
 }
