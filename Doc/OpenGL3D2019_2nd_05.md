@@ -74,7 +74,7 @@ Texture.hを開き、次のプログラムを追加してください。
 #include <memory>
 
 class FramebufferObject;
-typedef std::shared_ptr<FramebufferObject> FramebufferObjectPtr;
+using FramebufferObjectPtr = std::shared_ptr<FramebufferObject>;
 
 /**
 * フレームバッファオブジェクト.
