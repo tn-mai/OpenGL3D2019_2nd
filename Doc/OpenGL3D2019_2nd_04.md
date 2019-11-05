@@ -278,7 +278,8 @@ time変数はノーマルマップをスクロールさせるために使用し�
    fragColor.rgb *= lightColor;
 +
 +  vec3 cameraVector = normalize(cameraPosition - inPosition);
-+  vec3 reflectionVector = 2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
++  vec3 reflectionVector =
++    2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
 +  vec3 environmentColor = texture(texCubeMap, reflectionVector).rgb;
 +  fragColor.rgb += environmentColor;
  }
@@ -611,7 +612,8 @@ Buffer::SetViewProjectionMatrix関数に、次のプログラムを追加して�
 +* @retval true  メッシュの作成に成功.
 +* @retval false メッシュを作成できなかった.
 +*/
-+bool HeightMap::CreateWaterMesh(Mesh::Buffer& meshBuffer, const char* meshName, float waterLevel) const
++bool HeightMap::CreateWaterMesh(Mesh::Buffer& meshBuffer, const char* meshName,
++  float waterLevel) const
 +{
 +  // 頂点データを作成.
 +  Mesh::Vertex v;
