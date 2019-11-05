@@ -70,6 +70,18 @@ bool MainGameScene::Initialize()
   meshBuffer.LoadSkeletalMesh("Res/oni_small.gltf");
   meshBuffer.LoadMesh("Res/wall_stone.gltf");
 
+  // FBOを作成する.
+  fboMain = FrameBufferObject::Create(1280, 720);
+  Mesh::FilePtr rt = meshBuffer.AddPlane("RenderTarget");
+  if (rt) {
+    rt->materials[0].program = Shader::Program::Create("Res/DepthOfField.vert", "Res/DepthOfField.frag");
+    rt->materials[0].texture[0] = fboMain->GetColorTexture();
+    rt->materials[0].texture[1] = fboMain->GetDepthTexture();
+  }
+  if (!rt || !rt->materials[0].program) {
+    return false;
+  }
+
   // ハイトマップを作成する.
   if (!heightMap.LoadFromFile("Res/Terrain.tga", 50.0f, 0.5f)) {
     return false;
@@ -95,7 +107,7 @@ bool MainGameScene::Initialize()
   // ライトを配置
   const int lightRangeMin = 80;
   const int lightRangeMax = 120;
-  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.15f, 0.25f, 0.2f), glm::normalize(glm::vec3(1, -2, -1))));
+  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.15f, 0.25f, 0.2f), glm::normalize(glm::vec3(1, -1, -1))));
   for (int i = 0; i < 30; ++i) {
     glm::vec3 color(1, 0.8f, 0.5f);
     glm::vec3 position(0);
@@ -257,8 +269,14 @@ void MainGameScene::Update(float deltaTime)
 {
   // カメラの状態を更新.
   {
-    camera.target = player->position;
-    camera.position = camera.target + glm::vec3(0, 50, 25);
+    const float distance = 15.0f;
+    const float angle = glm::radians(-30.0f);
+    const glm::vec3 axis(1, 0, 0);
+    const glm::vec3 offset(glm::rotate(glm::mat4(1), angle, axis) * glm::vec4(0, 0, distance, 1));
+    camera.target = player->position + glm::vec3(0, 1.2f, 0);
+    camera.position = camera.target + offset;
+    camera.fNumber = 1.4f;
+    camera.fov = glm::radians(60.0f);
   }
 
   player->Update(deltaTime);
@@ -387,13 +405,16 @@ void MainGameScene::Update(float deltaTime)
 */
 void MainGameScene::Render()
 {
+  glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());
+
   const GLFWEW::Window& window = GLFWEW::Window::Instance();
   const glm::vec2 screenSize(window.Width(), window.Height());
-  spriteRenderer.Draw(screenSize);
 
   lightBuffer.Upload();
   lightBuffer.Bind();
 
+  glClearColor(0.5f, 0.6f, 0.8f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -402,7 +423,7 @@ void MainGameScene::Render()
   const float aspectRatio =
     static_cast<float>(window.Width()) / static_cast<float>(window.Height());
   const glm::mat4 matProj =
-    glm::perspective(glm::radians(30.0f), aspectRatio, 1.0f, 1000.0f);
+    glm::perspective(camera.fov * 0.5f, aspectRatio, camera.near, camera.far);
   meshBuffer.SetViewProjectionMatrix(matProj * matView);
   meshBuffer.SetCameraPosition(camera.position);
   meshBuffer.SetTime(window.Time());
@@ -438,7 +459,23 @@ void MainGameScene::Render()
 
   Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1));
 
-  fontRenderer.Draw(screenSize);
+  {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    spriteRenderer.Draw(screenSize);
+
+    camera.Update(matView);
+
+    Mesh::FilePtr mesh = meshBuffer.GetFile("RenderTarget");
+    Shader::ProgramPtr prog = mesh->materials[0].program;
+    prog->Use();
+    prog->SetViewInfo(static_cast<float>(window.Width()), static_cast<float>(window.Height()), camera.near, camera.far);
+    prog->SetCameraInfo(camera.focalPlane, camera.focalLength, camera.aperture, camera.sensorSize);
+    Mesh::Draw(mesh, glm::mat4(1));
+
+    fontRenderer.Draw(screenSize);
+  }
 }
 
 /**
@@ -476,3 +513,26 @@ bool MainGameScene::HandleJizoEffects(int id, const glm::vec3& pos)
   }
   return true;
 }
+
+/**
+* カメラのパラメータを更新する.
+*
+* @param matView 更新に使用するビュー行列.
+*/
+void MainGameScene::Camera::Update(const glm::mat4& matView)
+{
+  const float scale = -1000.0f;
+  const glm::vec4 pos = matView * glm::vec4(target, 1);
+  focalPlane = pos.z * scale;
+#if 1
+  const float imageDistance = sensorSize * 0.5f / glm::tan(fov * 0.5f); // 焦点距離.
+  //const float fov = 2.0f * glm::atan(sensorSize * 0.5f / imageDistance);
+  focalLength = 1.0f / ((1.0f / focalPlane) + (1.0f / imageDistance));
+#else
+  // 上の式を変形して除算を減らしたバージョン.
+  // `https://www.slideshare.net/siliconstudio/cedec-2010`で提示されている式.
+  const float f = (focalPlane * sensorSize * 0.5f) / (glm::tan(fov * 0.5f) * focalPlane + sensorSize * 0.5f);
+#endif
+  aperture = focalLength / fNumber;
+}
+

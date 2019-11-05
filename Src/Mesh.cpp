@@ -594,6 +594,31 @@ void Buffer::AddCube(const char* name)
   const Material m = CreateMaterial(glm::vec4(1), nullptr);
   AddMesh(name, p, m);
 }
+
+/**
+* 平面を追加する.
+*
+* @param name 平面のメッシュ名.
+*/
+FilePtr Buffer::AddPlane(const char* name)
+{
+  const Vertex v[] = {
+    {{-1,-1, 0}, { 0, 0}, { 0, 0, 1}},
+    {{ 1,-1, 0}, { 1, 0}, { 0, 0, 1}},
+    {{ 1, 1, 0}, { 1, 1}, { 0, 0, 1}},
+    {{-1, 1, 0}, { 0, 1}, { 0, 0, 1}},
+  };
+  const GLubyte i[] = { 0, 1, 2, 2, 3, 0 };
+
+  const size_t vOffset = AddVertexData(v, sizeof(v));
+  const size_t iOffset = AddIndexData(i, sizeof(i));
+  const Primitive p = CreatePrimitive(6, GL_UNSIGNED_BYTE, iOffset, vOffset);
+  const Material m = CreateMaterial(glm::vec4(1), nullptr);
+  if (!AddMesh(name, p, m)) {
+    return nullptr;
+  }
+  return GetFile(name);
+}
   
 /**
 * シェーダにビュー・プロジェクション行列を設定する.

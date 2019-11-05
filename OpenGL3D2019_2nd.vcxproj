@@ -170,6 +170,7 @@
     <ClInclude Include="Src\Light.h" />
     <ClInclude Include="Src\MainGameScene.h" />
     <ClInclude Include="Src\Mesh.h" />
+    <ClInclude Include="Src\FrameBufferObject.h" />
     <ClInclude Include="Src\PlayerActor.h" />
     <ClInclude Include="Src\Scene.h" />
     <ClInclude Include="Src\Shader.h" />
@@ -202,6 +203,7 @@
     <ClCompile Include="Src\Light.cpp" />
     <ClCompile Include="Src\MainGameScene.cpp" />
     <ClCompile Include="Src\Mesh.cpp" />
+    <ClCompile Include="Src\FrameBufferObject.cpp" />
     <ClCompile Include="Src\PlayerActor.cpp" />
     <ClCompile Include="Src\Scene.cpp" />
     <ClCompile Include="Src\Shader.cpp" />
@@ -216,6 +218,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Res\DepthOfField.frag" />
+    <None Include="Res\DepthOfField.vert" />
     <None Include="Res\SkeletalMesh.frag" />
     <None Include="Res\SkeletalMesh.vert" />
     <None Include="Res\StaticMesh.frag" />

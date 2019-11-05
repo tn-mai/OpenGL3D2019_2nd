@@ -318,40 +318,46 @@ return glm::vec4(0, 0, 0, 1);
 * @retval 0 以外	作成したテクスチャ・オブジェクトのID
 * @retval 0			テクスチャの作成に失敗
 */
-	GLuint CreateImage2D(GLsizei width, GLsizei height, const GLvoid* data,
-		GLenum format, GLenum type) 
+GLuint CreateImage2D(GLsizei width, GLsizei height, const GLvoid* data,
+  GLenum format, GLenum type)
 {
-	GLuint id;
-	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D,
-		0, GL_RGBA8, width, height, 0, format, type, data);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	const GLenum result = glGetError();
-	if (result != GL_NO_ERROR) {
-		std::cerr << "ERROR: テクスチャの作成に失敗(0x" << std::hex << result << ").";
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glDeleteTextures(1, &id);
-		return 0;
-	}
+  return CreateImage2D(width, height, data, format, type, GL_RGBA8);
+}
 
-	// テクスチャのパラメータを設定する
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// １要素の画像データの場合、(R,R,R,l)として読み取られるように設定する
-	if (format == GL_RED) {
-		const GLint swizzle[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
-		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
-	}
-		
-	glBindTexture(GL_TEXTURE_2D, 0);
-		
-	return id;
-	}
+GLuint CreateImage2D(GLsizei width, GLsizei height, const GLvoid* data,
+  GLenum format, GLenum type, GLenum internalFormat)
+{
+  GLuint id;
+  glGenTextures(1, &id);
+  glBindTexture(GL_TEXTURE_2D, id);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glTexImage2D(GL_TEXTURE_2D,
+    0, internalFormat, width, height, 0, format, type, data);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+  const GLenum result = glGetError();
+  if (result != GL_NO_ERROR) {
+    std::cerr << "ERROR: テクスチャの作成に失敗(0x" << std::hex << result << ").";
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDeleteTextures(1, &id);
+    return 0;
+  }
+
+  // テクスチャのパラメータを設定する
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  // １要素の画像データの場合、(R,R,R,l)として読み取られるように設定する
+  if (format == GL_RED) {
+    const GLint swizzle[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+  }
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  return id;
+}
 
 /**
 * ファイルから 2D テクスチャを読み込む

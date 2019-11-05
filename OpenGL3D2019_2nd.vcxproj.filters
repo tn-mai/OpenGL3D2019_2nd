@@ -111,6 +111,9 @@
     <ClInclude Include="Src\Light.h">
       <Filter>ソース ファイル\Light</Filter>
     </ClInclude>
+    <ClInclude Include="Src\FrameBufferObject.h">
+      <Filter>ソース ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -188,6 +191,9 @@
     <ClCompile Include="Src\Light.cpp">
       <Filter>ソース ファイル\Light</Filter>
     </ClCompile>
+    <ClCompile Include="Src\FrameBufferObject.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -216,6 +222,12 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Res\Water.frag">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Res\DepthOfField.vert">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Res\DepthOfField.frag">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>
