@@ -140,10 +140,10 @@ FramebufferObjectPtr FramebufferObject::Create(int w, int h)
    }
 +
 +  // テクスチャを作成する.
-+  fbo->texColor = std::make_shared<Texture::Image2D>(
-+    Texture::CreateImage2D(w, h, nullptr, GL_RGBA, GL_UNSIGNED_BYTE));
-+  fbo->texDepth = std::make_shared<Texture::Image2D>(
-+    Texture::CreateImage2D(w, h, nullptr, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_COMPONENT32F));
++  fbo->texColor = std::make_shared<Texture::Image2D>(Texture::CreateImage2D(
++    w, h, nullptr, GL_RGBA, GL_UNSIGNED_BYTE));
++  fbo->texDepth = std::make_shared<Texture::Image2D>(Texture::CreateImage2D(
++    w, h, nullptr, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_COMPONENT32F));
 
    return fbo;
  }
@@ -449,7 +449,8 @@ FBO、メッシュ、シェーダーの用意ができたので、実際に組�
 +  fboMain = FramebufferObject::Create(window.Width(), window.Height());
 +  Mesh::FilePtr rt = meshBuffer.AddPlane("RenderTarget");
 +  if (rt) {
-+    rt->materials[0].program = Shader::Program::Create("Res/DepthOfField.vert", "Res/DepthOfField.frag");
++    rt->materials[0].program = Shader::Program::Create(
+  +    "Res/DepthOfField.vert", "Res/DepthOfField.frag");
 +    rt->materials[0].texture[0] = fboMain->GetColorTexture();
 +    rt->materials[0].texture[1] = fboMain->GetDepthTexture();
 +  }
@@ -783,7 +784,8 @@ CaclCoC(かるく・しー・おー・しー)関数の引数は実際のZ値で�
    void SetCameraPosition(const glm::vec3&);
    void SetTime(float);
 +  void SetViewInfo(float w, float h, float near, float far);
-+  void SetCameraInfo(float focalPlane, float focalLength, float aperture, float sensorSize);
++  void SetCameraInfo(float focalPlane, float focalLength, float aperture,
++    float sensorSize);
 
    /// プログラムIDを取得する.
    GLuint Get() const { return id; }
@@ -880,7 +882,8 @@ CaclCoC(かるく・しー・おー・しー)関数の引数は実際のZ値で�
 +* @param aperture    開口(光の取入口のサイズ. mm単位).
 +* @param sensorSize  センサーサイズ(光を受けるセンサーの横幅. mm単位).
 +*/
-+void Program::SetCameraInfo(float focalPlane, float focalLength, float aperture, float sensorSize)
++void Program::SetCameraInfo(float focalPlane, float focalLength, float aperture,
++  float sensorSize)
 +{
 +  if (locCameraInfo >= 0) {
 +    glUniform4f(locCameraInfo, focalPlane, focalLength, aperture, sensorSize);
