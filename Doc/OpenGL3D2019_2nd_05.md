@@ -746,7 +746,7 @@ glClear関数は、バインドされているフレームバッファにのみ�
 CaclCoC(かるく・しー・おー・しー)関数の引数は実際のZ値です。計算式には以下の式をそのまま使っています。
 
 <div style="text-align: center;width: 100%;">
-<img src="images/05_coc_equation.png" style="width:45%; margin-left:auto; margin-right:auto"/>
+<img src="images/05_coc_equation.png" style="width:30%; margin-left:auto; margin-right:auto"/>
 </div>
 
 この計算式で得られるのはミリメートル単位の大きさです。テクスチャ座標の補正値として使うには、これをピクセル数に変換し、さらにテクスチャ座標に変換しなければなりません。それを行っているのが`* mmToPixel * viewInfo.xy`の部分です。mmToPixelは名前のとおりミリメートルをピクセル数に変換するための係数です。センサーの横幅を画面のピクセル数で除算すると、mm単位のピクセルの幅が分かります。mm単位のCoCをこの数値で割ればピクセル数が得られるというわけです。また、1ピクセルに相当するテクスチャ座標の大きさは`1.0 / ビューサイズ`で計算でき、これは既にviewInfo.xyとして計算済みです。
