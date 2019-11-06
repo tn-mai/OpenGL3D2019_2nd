@@ -338,6 +338,18 @@ time変数はノーマルマップをスクロールさせるために使用し�
 次にShader.cppを開き、Program::Reset関数に以下のプログラムを追加してください。
 
 ```diff
+     locSpotLightIndex = -1;
++    locCameraPosition = -1;
++    locTime = -1;
+     return;
+   }
+
+   locMatMVP = glGetUniformLocation(id, "matMVP");
+   locMatModel = glGetUniformLocation(id, "matModel");
+   locPointLightCount = glGetUniformLocation(id, "pointLightCount");
+   locPointLightIndex = glGetUniformLocation(id, "pointLightIndex");
+   locSpotLightCount = glGetUniformLocation(id, "spotLightCount");
+   locSpotLightIndex = glGetUniformLocation(id, "spotLightIndex");
    locSpotLightCount = glGetUniformLocation(id, "spotLightCount");
    locSpotLightIndex = glGetUniformLocation(id, "spotLightIndex");
 +  locCameraPosition = glGetUniformLocation(id, "cameraPosition");
@@ -817,21 +829,32 @@ DirectXは左手座標系でテクスチャ座標原点は左上です。対し�
 それではフレネル係数を計算し、それを適用しましょう。Water.fragのmain関数の末尾を次のように変更してください。
 
 ```diff
-   fragColor.rgb *= lightColor;
-
-   vec3 cameraVector = normalize(cameraPosition - inPosition);
-   vec3 reflectionVector = 2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
+   vec3 reflectionVector =
+     2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
    vec3 environmentColor = texture(texCubeMap, reflectionVector).rgb;
 -  fragColor.rgb += environmentColor;
-+  float brightness = 8.0;
++  float brightness = 5.0;
 +  float opacity = 0.6;
-+  float f = GetFresnelFactor(cameraVector, normal);
-+  fragColor.rgb += environmentColor * f * brightness;
-+  fragColor.a = clamp(opacity + f * (1.0 - opacity), 0.0, 1.0);
++  vec3 yuv = mat3(
++    0.299,-0.169, 0.500,
++    0.587,-0.331,-0.419,
++    0.114, 0.500,-0.081) * environmentColor;
++  yuv.r *= GetFresnelFactor(cameraVector, normal) * brightness;
++  fragColor.rgb += mat3(
++    1.000, 1.000, 1.000,
++    0.000,-0.344, 1.772,
++    1.402,-0.714, 0.000) * yuv;
++  fragColor.a = opacity + yuv.r;
  }
 ```
 
-上記のプログラムで追加した「brightness(ぶらいとねす)」変数は、反射光の明るさを表しています。フレネル係数を導入すると反射される光の強さがかなり少なくなってしまうので、キューブマップの明るさを8倍するようにしてみました。また、「opacity(おぱしてぃ」変数は、水の不透明度を表しています。この数値を小さくすると、水底がよく見えるようになります。
+上記のプログラムの「brightness(ぶらいとねす)」変数は、反射光の明るさを表しています。フレネル係数を導入すると反射される光の強さがかなり少なくなってしまうので、キューブマップの明るさを5倍するようにしてみました(数値に根拠はなく、それらしく見える明るさをいくつか試して決めました)。また、「opacity(おぱしてぃ」変数は、水の不透明度を表しています。この数値を小さくすると、水底がよく見えるようになります。
+
+「yuv(わい・ゆー・ぶい)」変数には、RGBカラーを「YUVカラー」と呼ばれる色表現形式に変換した値が格納されます。YUVカラーへの変換には3x3行列を使用します。YUVカラーについては`https://ja.wikipedia.org/wiki/YUV`を参照してください。YUVカラーは「Y=明るさ、U=色味その1、V=色味その2」という色表現形式です。明るさパラメータが独立しているため、画像の色味は維持しつつ明るさだけを変えることができます。
+
+次にYUVカラーのY、つまり明るさ要素にフレネル係数と`brightness`を掛け、再び3x3行列を利用してRGBカラーに戻し、出力カラーに加算します。これによって、水自体の色に周辺からの反射色を加えます。
+
+最後に不透明度を設定します。水は高い透明度を持ちますが、反射光が強い場合は水底の色はほとんど見えなくなります。これを表現するため、水自体の不透明度(opacity)に反射光の明るさ(YUVのY)を加算したものを不透明度としています。
 
 プログラムが書けたらビルドして実行してください。水面の透明度が高くなり、水底がよく見えていたら成功です。
 
