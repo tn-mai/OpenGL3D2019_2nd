@@ -125,16 +125,23 @@ void main()
   vec3 cameraVector = normalize(cameraPosition - inPosition);
   vec3 reflectionVector = 2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
   vec3 environmentColor = texture(texCubeMap, reflectionVector).rgb;
-  float brightness = 5.0;
-  float opacity = 0.6;
+
+  float brightness = 5.0; // 環境マップの明るさ補正値. 発見的に晴れた日中ぽく見える値を選んだ.
+  float opacity = 0.6; // 水の不透明度.
   vec3 yuv = mat3(
     0.299,-0.169, 0.500,
     0.587,-0.331,-0.419,
     0.114, 0.500,-0.081) * environmentColor;
   yuv.r *= GetFresnelFactor(cameraVector, normal) * brightness;
+  fragColor.a = opacity + yuv.r;
+
+  // 反射光は水中からの出射光に加算されるが、α合成後の明るさは「反射光の明るさ*α」に減じてしまう.
+  // 明るさをアルファで除算しておくと「反射光の明るさ*α/α」となるので意図した明るさで表示される.
+  // 不透明度が小さすぎる場合に白く飽和してしまうが、水の不透明度をある程度の大きさ以上に設定すれば回避できる.
+  yuv.r /= fragColor.a;
+
   fragColor.rgb += mat3(
     1.000, 1.000, 1.000,
     0.000,-0.344, 1.772,
     1.402,-0.714, 0.000) * yuv;
-  fragColor.a = opacity + yuv.r;
 }
