@@ -224,7 +224,7 @@ GLintptr Buffer::AddVertexData(const void* data, size_t size)
 {
   vbo.BufferSubData(vboEnd, size, data);
   const GLintptr tmp = vboEnd;
-  vboEnd += size;
+  vboEnd += ((size + 3) / 4) * 4;
   return tmp;
 }
 
@@ -241,7 +241,7 @@ GLintptr Buffer::AddIndexData(const void* data, size_t size)
 {
   ibo.BufferSubData(iboEnd, size, data);
   const GLintptr tmp = iboEnd;
-  iboEnd += size;
+  iboEnd += ((size + 3) / 4) * 4;
   return tmp;
 }
 
