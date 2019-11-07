@@ -457,6 +457,7 @@ void MainGameScene::Render()
     glm::translate(glm::mat4(1), treePos) * glm::scale(glm::mat4(1), glm::vec3(3));
   Mesh::Draw(meshBuffer.GetFile("Res/red_pine_tree.gltf"), matTreeModel);
 
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1));
 
   {
