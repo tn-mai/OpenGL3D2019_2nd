@@ -790,9 +790,10 @@ Mesh.hを開き、Material構造体を次のように変更してください。
 
 ### 2.6 ノーマルマップ用のユニフォーム変数をテクスチャ・イメージ・ユニットに割り当てる
 
-シェーダーにノーマルマップ用のユニフォーム変数を追加したので、それらをテクスチャ・イメージ・ユニットにバインドしなければなりません。Shader.cppを開き、Program::Reset関数に、次のプログラムを追加してください。
+シェーダーにノーマルマップ用のユニフォーム変数を追加したので、それらをテクスチャ・イメージ・ユニットにバインドしなければなりません。Shader.cppを開き、Program::Reset関数のtexColorArrayをバインドするプログラムの下に、次のプログラムを追加してください。
 
 ```diff
+     const GLint texColorLoc = glGetUniformLocation(id, name.c_str());
      if (texColorLoc >= 0) {
        glUniform1i(texColorLoc, i);
      }
