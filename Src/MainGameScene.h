@@ -81,6 +81,8 @@ private:
   ActorList lights;
 
   FrameBufferObjectPtr fboMain;
+  FrameBufferObjectPtr fboDepthOfField;
+  FrameBufferObjectPtr fboBloom[6][2];
 };
 
 #endif // MAINGAMESCENE_H_INCLUDED

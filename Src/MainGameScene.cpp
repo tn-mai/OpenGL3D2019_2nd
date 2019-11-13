@@ -71,7 +71,11 @@ bool MainGameScene::Initialize()
   meshBuffer.LoadMesh("Res/wall_stone.gltf");
 
   // FBOを作成する.
-  fboMain = FrameBufferObject::Create(1280, 720);
+  const GLFWEW::Window& window = GLFWEW::Window::Instance();
+  int w = window.Width();
+  int h = window.Height();
+  fboMain = FrameBufferObject::Create(w, h, GL_RGBA16F);
+  fboDepthOfField = FrameBufferObject::Create(w, h, GL_RGBA16F);
   Mesh::FilePtr rt = meshBuffer.AddPlane("RenderTarget");
   if (rt) {
     rt->materials[0].program = Shader::Program::Create("Res/DepthOfField.vert", "Res/DepthOfField.frag");
@@ -79,6 +83,43 @@ bool MainGameScene::Initialize()
     rt->materials[0].texture[1] = fboMain->GetDepthTexture();
   }
   if (!rt || !rt->materials[0].program) {
+    return false;
+  }
+
+  // 元解像度の縦横1/2(面積では1/4)の大きさのブルーム用FBOを作る.
+  for (int j = 0; j < sizeof(fboBloom) / sizeof(fboBloom[0]); ++j) {
+    w /= 2;
+    h /= 2;
+    for (int i = 0; i < sizeof(fboBloom[0]) / sizeof(fboBloom[0][0]); ++i) {
+      fboBloom[j][i] = FrameBufferObject::Create(w, h, GL_RGBA16F, FrameBufferType::colorOnly);
+      if (!fboBloom[j][i]) {
+        return false;
+      }
+    }
+  }
+
+  // ブルーム・エフェクト用の平面ポリゴンメッシュを作成する.
+  if (Mesh::FilePtr mesh = meshBuffer.AddPlane("BrightPassFilter")) {
+    Shader::ProgramPtr p = Shader::Program::Create("Res/Simple.vert", "Res/BrightPassFilter.frag");
+    p->Use();
+    p->SetViewProjectionMatrix(glm::mat4(1));
+    mesh->materials[0].program = p;
+    mesh->materials[0].texture[0] = fboMain->GetColorTexture();
+  }
+  if (Mesh::FilePtr mesh = meshBuffer.AddPlane("GaussianBlur9")) {
+    Shader::ProgramPtr p = Shader::Program::Create("Res/Simple.vert", "Res/GaussianBlur9.frag");
+    p->Use();
+    p->SetViewProjectionMatrix(glm::mat4(1));
+    mesh->materials[0].program = p;
+  }
+  if (Mesh::FilePtr mesh = meshBuffer.AddPlane("Simple")) {
+    Shader::ProgramPtr p = Shader::Program::Create("Res/Simple.vert", "Res/Simple.frag");
+    p->Use();
+    p->SetViewProjectionMatrix(glm::mat4(1));
+    mesh->materials[0].program = p;
+  }
+  if (glGetError()) {
+    std::cout << "[エラー]" << __func__ << ":ブルーム用メッシュの作成に失敗.\n";
     return false;
   }
 
@@ -405,19 +446,19 @@ void MainGameScene::Update(float deltaTime)
 */
 void MainGameScene::Render()
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());
-
   const GLFWEW::Window& window = GLFWEW::Window::Instance();
-  const glm::vec2 screenSize(window.Width(), window.Height());
 
-  lightBuffer.Upload();
-  lightBuffer.Bind();
-
+  glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());
+  glViewport(0, 0, window.Width(), window.Height());
   glClearColor(0.5f, 0.6f, 0.8f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  lightBuffer.Upload();
+  lightBuffer.Bind();
 
   const glm::mat4 matView = glm::lookAt(camera.position, camera.target, camera.up);
   const float aspectRatio =
@@ -460,23 +501,127 @@ void MainGameScene::Render()
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1));
 
+  // 被写界深度.
   {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, fboDepthOfField->GetFramebuffer());
+    auto tex = fboDepthOfField->GetColorTexture();
+    glViewport(0, 0, tex->Width(), tex->Height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    spriteRenderer.Draw(screenSize);
 
     camera.Update(matView);
 
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
     Mesh::FilePtr mesh = meshBuffer.GetFile("RenderTarget");
     Shader::ProgramPtr prog = mesh->materials[0].program;
     prog->Use();
     prog->SetViewInfo(static_cast<float>(window.Width()), static_cast<float>(window.Height()), camera.near, camera.far);
     prog->SetCameraInfo(camera.focalPlane, camera.focalLength, camera.aperture, camera.sensorSize);
     Mesh::Draw(mesh, glm::mat4(1));
+  }
+
+  // ブルーム・エフェクト.
+  {
+    // 明るい部分を抽出.
+    {
+      glBindFramebuffer(GL_FRAMEBUFFER, fboBloom[0][0]->GetFramebuffer());
+      auto tex = fboBloom[0][0]->GetColorTexture();
+      glViewport(0, 0, tex->Width(), tex->Height());
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glDisable(GL_BLEND);
+      glDisable(GL_DEPTH_TEST);
+      glDisable(GL_CULL_FACE);
+      Mesh::Draw(meshBuffer.GetFile("BrightPassFilter"), glm::mat4(1));
+    }
+
+    // 縮小コピー.
+    Mesh::FilePtr simpleMesh = meshBuffer.GetFile("Simple");
+    for (int i = 0; i < sizeof(fboBloom) / sizeof(fboBloom[0]) - 1; ++i) {
+      simpleMesh->materials[0].texture[0] = fboBloom[i][0]->GetColorTexture();
+      glBindFramebuffer(GL_FRAMEBUFFER, fboBloom[i + 1][0]->GetFramebuffer());
+      auto tex = fboBloom[i + 1][0]->GetColorTexture();
+      glViewport(0, 0, tex->Width(), tex->Height());
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      Mesh::Draw(simpleMesh, glm::mat4(1));
+    }
+
+    // ガウスぼかし.
+    Mesh::FilePtr blurMesh = meshBuffer.GetFile("GaussianBlur9");
+    Shader::ProgramPtr progBlur = blurMesh->materials[0].program;
+    for (int i = sizeof(fboBloom) / sizeof(fboBloom[0]) - 1; i >= 0; --i) {
+      glBindFramebuffer(GL_FRAMEBUFFER, fboBloom[i][1]->GetFramebuffer());
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      auto tex = fboBloom[i][0]->GetColorTexture();
+      glViewport(0, 0, tex->Width(), tex->Height());
+      progBlur->Use();
+      progBlur->SetBlurDirection(1.0f / static_cast<float>(tex->Width()), 0.0f);
+      blurMesh->materials[0].texture[0] = tex;
+      Mesh::Draw(blurMesh, glm::mat4(1));
+
+      glBindFramebuffer(GL_FRAMEBUFFER, fboBloom[i][0]->GetFramebuffer());
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      progBlur->Use();
+      progBlur->SetBlurDirection(0.0f, 1.0f / static_cast<float>(tex->Height()));
+      blurMesh->materials[0].texture[0] = fboBloom[i][1]->GetColorTexture();
+      Mesh::Draw(blurMesh, glm::mat4(1));
+    }
+
+    // 拡大＆加算合成.
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    for (int i = sizeof(fboBloom) / sizeof(fboBloom[0]) - 1; i > 0; --i) {
+      glBindFramebuffer(GL_FRAMEBUFFER, fboBloom[i - 1][0]->GetFramebuffer());
+      auto tex = fboBloom[i - 1][0]->GetColorTexture();
+      glViewport(0, 0, tex->Width(), tex->Height());
+      simpleMesh->materials[0].texture[0] = fboBloom[i][0]->GetColorTexture();
+      Mesh::Draw(simpleMesh, glm::mat4(1));
+    }
+  }
+  
+  // 全てをデフォルト・フレームバッファに合成描画.
+  {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, window.Width(), window.Height());
+
+    const glm::vec2 screenSize(window.Width(), window.Height());
+    spriteRenderer.Draw(screenSize);
+
+    // 画像を描画.
+    glDisable(GL_BLEND);
+    Mesh::FilePtr simpleMesh = meshBuffer.GetFile("Simple");
+    simpleMesh->materials[0].texture[0] = fboDepthOfField->GetColorTexture();
+    Mesh::Draw(simpleMesh, glm::mat4(1));
+
+    // ブルームを描画.
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    simpleMesh->materials[0].texture[0] = fboBloom[0][0]->GetColorTexture();
+    Mesh::Draw(simpleMesh, glm::mat4(1));
 
     fontRenderer.Draw(screenSize);
   }
+
+#if 0
+  // デバッグ用にブルーム用フレームバッファを表示.
+  {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ZERO);
+    Mesh::FilePtr simpleMesh = meshBuffer.GetFile("Simple");
+    for (int i = 0; i < 4; ++i) {
+      auto tex = fboBloom[i][0]->GetColorTexture();
+      glBindTexture(GL_TEXTURE_2D, tex->Get());
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      simpleMesh->materials[0].texture[0] = tex;
+      glm::mat4 m = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-0.75f + (float)i * 0.5f, 0.75f, 0)), glm::vec3(0.25f));
+      Mesh::Draw(simpleMesh, m);
+      glBindTexture(GL_TEXTURE_2D, tex->Get());
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glBindTexture(GL_TEXTURE_2D, 0);
+    }
+  }
+#endif
 }
 
 /**
