@@ -460,6 +460,30 @@ bool LoadImage2D(const char* path, ImageData* imageData)
 }
 
 /**
+* テクスチャ・ラップ・モードを設定する.
+*
+* @param mode  設定するテクスチャ・ラップ・モード.
+*
+* 横と縦の両方に同じラップモードを設定する.
+*/
+void Interface::SetWrapMode(GLenum mode)
+{
+  const GLuint id = Get();
+  if (!id) {
+      std::cerr << "[警告]" << __func__ << ":テクスチャが設定されていません.\n";
+  }
+  const GLenum target = Target();
+  glBindTexture(target, Get());
+  glTexParameteri(target, GL_TEXTURE_WRAP_S, mode);
+  glTexParameteri(target, GL_TEXTURE_WRAP_T, mode);
+  glBindTexture(target, 0);
+  const GLenum error = glGetError();
+  if (error) {
+    std::cerr << "[エラー]" << __func__ << "テクスチャ・ラップ・モードの設定に失敗(" << std::hex << error << ")\n";
+  }
+}
+
+/**
 * コンストラクタ
 *
 * @param texId テクスチャ・オブジェクトのID.
