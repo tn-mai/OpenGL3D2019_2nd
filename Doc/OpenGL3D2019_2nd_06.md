@@ -63,7 +63,7 @@ int main()
 
 <div style="page-break-after: always"></div>
 
-［OpenGL 2019後期 第05回 C言語練習問題 解答用紙］
+［OpenGL 2019後期 第06回 C言語練習問題 解答用紙］
 
 クラス：<br>氏名：
 
