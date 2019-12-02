@@ -450,7 +450,7 @@ FBO、メッシュ、シェーダーの用意ができたので、実際に組�
 +  Mesh::FilePtr rt = meshBuffer.AddPlane("RenderTarget");
 +  if (rt) {
 +    rt->materials[0].program = Shader::Program::Create(
-  +    "Res/DepthOfField.vert", "Res/DepthOfField.frag");
++    "Res/DepthOfField.vert", "Res/DepthOfField.frag");
 +    rt->materials[0].texture[0] = fboMain->GetColorTexture();
 +    rt->materials[0].texture[1] = fboMain->GetDepthTexture();
 +  }
