@@ -72,10 +72,7 @@ bool MainGameScene::Initialize()
 
   // FBOを作成する.
   const GLFWEW::Window& window = GLFWEW::Window::Instance();
-  int w = window.Width();
-  int h = window.Height();
-  fboMain = FrameBufferObject::Create(w, h, GL_RGBA16F);
-  fboDepthOfField = FrameBufferObject::Create(w, h, GL_RGBA16F);
+  fboMain = FrameBufferObject::Create(window.Width(), window.Height(), GL_RGBA16F);
   Mesh::FilePtr rt = meshBuffer.AddPlane("RenderTarget");
   if (rt) {
     rt->materials[0].program = Shader::Program::Create("Res/DepthOfField.vert", "Res/DepthOfField.frag");
@@ -87,6 +84,8 @@ bool MainGameScene::Initialize()
   }
 
   // 元解像度の縦横1/2(面積では1/4)の大きさのブルーム用FBOを作る.
+  int w = window.Width();
+  int h = window.Height();
   for (int j = 0; j < sizeof(fboBloom) / sizeof(fboBloom[0]); ++j) {
     w /= 2;
     h /= 2;
@@ -99,12 +98,13 @@ bool MainGameScene::Initialize()
   }
 
   // ブルーム・エフェクト用の平面ポリゴンメッシュを作成する.
+  fboDepthOfField = FrameBufferObject::Create(window.Width(), window.Height(), GL_RGBA16F);
   if (Mesh::FilePtr mesh = meshBuffer.AddPlane("BrightPassFilter")) {
     Shader::ProgramPtr p = Shader::Program::Create("Res/Simple.vert", "Res/BrightPassFilter.frag");
     p->Use();
     p->SetViewProjectionMatrix(glm::mat4(1));
     mesh->materials[0].program = p;
-    mesh->materials[0].texture[0] = fboMain->GetColorTexture();
+    mesh->materials[0].texture[0] = fboDepthOfField->GetColorTexture();
   }
   if (Mesh::FilePtr mesh = meshBuffer.AddPlane("GaussianBlur9")) {
     Shader::ProgramPtr p = Shader::Program::Create("Res/Simple.vert", "Res/GaussianBlur9.frag");
