@@ -151,7 +151,7 @@ void main()
     if (coc.x > (2.0 * viewInfo.x) && abs(focalPlane - z) < 2.0) { 
     } else {
       fragColor.rgb += texture(texColorArray[0], uv).rgb;
-	  count += 1.0;
+      count += 1.0;
     }
 #else
     fragColor.rgb += texture(texColorArray[0], uv).rgb;

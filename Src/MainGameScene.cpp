@@ -148,23 +148,23 @@ bool MainGameScene::Initialize()
   // ライトを配置
   const int lightRangeMin = 80;
   const int lightRangeMax = 120;
-  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.15f, 0.25f, 0.2f), glm::normalize(glm::vec3(1, -1, -1))));
+  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.15f, 0.25f, 0.2f)* 4.0f, glm::normalize(glm::vec3(1, -1, -1))));
   for (int i = 0; i < 30; ++i) {
     glm::vec3 color(1, 0.8f, 0.5f);
     glm::vec3 position(0);
     position.x = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
     position.z = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
-    position.y = heightMap.Height(position) + 1;
-    lights.Add(std::make_shared<PointLightActor>("PointLight", color, position));
+    position.y = heightMap.Height(position) + 5;
+    lights.Add(std::make_shared<PointLightActor>("PointLight", color * 20.0f, position));
   }
   for (int i = 0; i < 30; ++i) {
     glm::vec3 color(1, 2, 3);
-    glm::vec3 direction(glm::normalize(glm::vec3(1, -1, 1)));
+    glm::vec3 direction(glm::normalize(glm::vec3(0.25f, -1, 0.25f)));
     glm::vec3 position(0);
     position.x = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
     position.z = static_cast<float>(std::uniform_int_distribution<>(lightRangeMin, lightRangeMax)(rand));
-    position.y = heightMap.Height(position) + 2;
-    lights.Add(std::make_shared<SpotLightActor>("SpotLight", color, position, direction
+    position.y = heightMap.Height(position) + 5;
+    lights.Add(std::make_shared<SpotLightActor>("SpotLight", color * 25.0f, position, direction
       , glm::radians(20.0f), glm::radians(15.0f)));
   }
   lights.Update(0);
@@ -313,7 +313,7 @@ void MainGameScene::Update(float deltaTime)
     const float distance = 15.0f;
     const float angle = glm::radians(-30.0f);
     const glm::vec3 axis(1, 0, 0);
-    const glm::vec3 offset(glm::rotate(glm::mat4(1), angle, axis) * glm::vec4(0, 0, distance, 1));
+    const glm::vec3 offset(glm::rotate(glm::mat4(1), glm::radians(0.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::mat4(1), angle, axis) * glm::vec4(0, 0, distance, 1));
     camera.target = player->position + glm::vec3(0, 1.2f, 0);
     camera.position = camera.target + offset;
     camera.fNumber = 1.4f;
@@ -449,7 +449,9 @@ void MainGameScene::Render()
   const GLFWEW::Window& window = GLFWEW::Window::Instance();
 
   glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());
-  glViewport(0, 0, window.Width(), window.Height());
+  auto texMain = fboMain->GetColorTexture();
+  glViewport(0, 0, texMain->Width(), texMain->Height());
+
   glClearColor(0.5f, 0.6f, 0.8f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glEnable(GL_DEPTH_TEST);
@@ -607,13 +609,13 @@ void MainGameScene::Render()
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ZERO);
     Mesh::FilePtr simpleMesh = meshBuffer.GetFile("Simple");
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 6; ++i) {
       auto tex = fboBloom[i][0]->GetColorTexture();
       glBindTexture(GL_TEXTURE_2D, tex->Get());
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       simpleMesh->materials[0].texture[0] = tex;
-      glm::mat4 m = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-0.75f + (float)i * 0.5f, 0.75f, 0)), glm::vec3(0.25f));
+      glm::mat4 m = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-0.75f + (float)(i%3) * 0.5f, 0.75f - (float)(i/3)*0.5f, 0)), glm::vec3(0.25f));
       Mesh::Draw(simpleMesh, m);
       glBindTexture(GL_TEXTURE_2D, tex->Get());
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

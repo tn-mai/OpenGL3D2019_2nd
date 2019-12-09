@@ -82,7 +82,8 @@ void main()
   vec4 scroll = vec4(-0.01, -0.01, 0.005, 0.005) * time;
   vec3 normalS = texture(texNormalArray[0], uv.xy + scroll.xy).rgb * 2.0 - 1.0;
   vec3 normalL = texture(texNormalArray[0], uv.zw + scroll.zw).rgb * 2.0 - 1.0;
-  vec3 normal = (normalS * 0.5 + normalL) * vec3(0.1, 0.1, 1.0);
+  float roughness = 0.05; // 水面の荒れ具合.
+  vec3 normal = (normalS * 0.5 + normalL) * vec3(roughness, roughness, 1.0);
   normal = normalize(matTBN * normal);
 
   vec3 lightColor = ambientLight.color.rgb;
@@ -126,16 +127,20 @@ void main()
   vec3 reflectionVector = 2.0 * max(dot(cameraVector, normal), 0.0) * normal - cameraVector;
   vec3 environmentColor = texture(texCubeMap, reflectionVector).rgb;
 
+  // ITU-R BT.601の変換式に従ってYUV(実際にはYCbCr)に変換し、Yにフレネル係数を掛けてRGBに戻す.
   float brightness = 5.0; // 環境マップの明るさ補正値. 発見的に晴れた日中ぽく見える値を選んだ.
   vec3 yuv = mat3(
     0.299,-0.169, 0.500,
     0.587,-0.331,-0.419,
     0.114, 0.500,-0.081) * environmentColor;
+  yuv.r = pow(yuv.r, 3.0);
   yuv.r *= GetFresnelFactor(cameraVector, normal) * brightness;
+
+  // 散乱光 * 不透明度 + 反射光.
   fragColor.rgb *= fragColor.a;
   fragColor.rgb += mat3(
     1.000, 1.000, 1.000,
     0.000,-0.344, 1.772,
     1.402,-0.714, 0.000) * yuv;
-  fragColor.a += yuv.r;
+  fragColor.a = clamp(fragColor.a + yuv.r, 0.0, 1.0);
 }
