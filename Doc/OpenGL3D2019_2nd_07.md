@@ -758,8 +758,8 @@ OpenGLでは、フレームバッファの描画範囲を指定することが�
    // ライトを配置
    const int lightRangeMin = 80;
    const int lightRangeMax = 120;
--  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.15f, 0.25f, 0.2f)* 4.0f, glm::normalize(glm::vec3(1, -1, -1))));
-+  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(1.0f, 0.94f, 0.91f)* 4.0f, glm::normalize(glm::vec3(1, -1, -1))));
+-  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(0.15f, 0.25f, 0.2f), glm::normalize(glm::vec3(1, -1, -1))));
++  lights.Add(std::make_shared<DirectionalLightActor>("DLight", glm::vec3(1.0f, 0.94f, 0.91f), glm::normalize(glm::vec3(1, -1, -1))));
    for (int i = 0; i < 30; ++i) {
 -    glm::vec3 color(1, 0.8f, 0.5f);
 +    glm::vec3 color = glm::vec3(1, 0.8f, 0.5f) * 20.0f;
