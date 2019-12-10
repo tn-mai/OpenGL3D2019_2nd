@@ -591,7 +591,7 @@ OpenGLでは、フレームバッファの描画範囲を指定することが�
 +      glViewport(0, 0, tex->Width(), tex->Height());
 +      glClear(GL_COLOR_BUFFER_BIT);
 +      Mesh::FilePtr mesh = meshBuffer.GetFile("BrightPassFilter");
-+      mesh->materials[0].texture[0] = fboBloom[i][0]->GetColorTexture();
++      mesh->materials[0].texture[0] = fboDepthOfField->GetColorTexture();
 +      Mesh::Draw(mesh, glm::mat4(1));
 +    }
 +  }
