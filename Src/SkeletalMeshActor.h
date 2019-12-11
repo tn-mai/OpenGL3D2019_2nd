@@ -9,7 +9,7 @@
 /**
 * スケルタルメッシュ用アクター.
 */
-class SkeletalMeshActor : public Actor
+class SkeletalMeshActor : public Actor, public LightReceiver
 {
 public:
   SkeletalMeshActor(const Mesh::SkeletalMeshPtr& m, const std::string& name, int hp, const glm::vec3& pos,
@@ -18,6 +18,7 @@ public:
 
   virtual void UpdateDrawData(float) override;
   virtual void Draw() override;
+  virtual void DrawShadow() override;
 
   const Mesh::SkeletalMeshPtr& GetMesh() const { return mesh; }
 

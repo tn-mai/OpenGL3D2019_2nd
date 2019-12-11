@@ -123,6 +123,13 @@ bool MainGameScene::Initialize()
     return false;
   }
 
+  // シャドウ用FBOを作成する.
+  fboShadow = FrameBufferObject::Create(4096, 4096, GL_RGBA8, FrameBufferType::depthOnly);
+  if (glGetError()) {
+    std::cout << "[エラー]" << __func__ << ":シャドウ用FBOの作成に失敗.\n";
+    return false;
+  }
+
   // ハイトマップを作成する.
   if (!heightMap.LoadFromFile("Res/Terrain.tga", 50.0f, 0.5f)) {
     return false;
@@ -448,6 +455,32 @@ void MainGameScene::Render()
 {
   const GLFWEW::Window& window = GLFWEW::Window::Instance();
 
+  // シャドウテクスチャに描画.
+  {
+    glBindFramebuffer(GL_FRAMEBUFFER, fboShadow->GetFramebuffer());
+    auto tex = fboShadow->GetDepthTexture();
+    glViewport(1, 1, tex->Width() - 2, tex->Height() - 2);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+
+    glm::vec3 position = camera.target - std::static_pointer_cast<DirectionalLightActor>(*lights.begin())->direction * 100.0f;
+    const glm::mat4 matView = glm::lookAt(position, camera.target, glm::vec3(0, 1, 0));
+    const float aspectRatio =
+      static_cast<float>(window.Width()) / static_cast<float>(window.Height());
+    float w = 100;
+    float h = 100;
+    const glm::mat4 matProj = glm::ortho<float>(-w / 2, w / 2, -h / 2, h / 2, 10.0f, 500.0f);
+    meshBuffer.SetShadowViewProjectionMatrix(matProj * matView);
+
+    Mesh::DrawShadow(meshBuffer.GetFile("Terrain"), glm::mat4(1));
+    player->DrawShadow();
+    enemies.DrawShadow();
+    trees.DrawShadow();
+    objects.DrawShadow();
+  }
+
   glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());
   auto texMain = fboMain->GetColorTexture();
   glViewport(0, 0, texMain->Width(), texMain->Height());
@@ -457,6 +490,7 @@ void MainGameScene::Render()
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   lightBuffer.Upload();
@@ -470,6 +504,9 @@ void MainGameScene::Render()
   meshBuffer.SetViewProjectionMatrix(matProj * matView);
   meshBuffer.SetCameraPosition(camera.position);
   meshBuffer.SetTime(window.Time());
+
+  glActiveTexture(GL_TEXTURE0 + 16);
+  glBindTexture(GL_TEXTURE_2D, fboShadow->GetDepthTexture()->Get());
 
   glm::vec3 cubePos(100, 0, 100);
   cubePos.y = heightMap.Height(cubePos);
@@ -502,6 +539,9 @@ void MainGameScene::Render()
 
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1));
+
+  glActiveTexture(GL_TEXTURE0 + 16);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   // 被写界深度.
   {
@@ -622,6 +662,17 @@ void MainGameScene::Render()
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glBindTexture(GL_TEXTURE_2D, 0);
     }
+  }
+#endif
+
+#if 0
+  {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ZERO);
+    Mesh::FilePtr simpleMesh = meshBuffer.GetFile("Simple");
+    simpleMesh->materials[0].texture[0] = fboShadow->GetDepthTexture();
+    glm::mat4 m = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-0.75f, 0.5f, 0)), glm::vec3(0.25f, 0.25f * (1280.0f / 720.0f), 1));
+    Mesh::Draw(simpleMesh, m);
   }
 #endif
 }

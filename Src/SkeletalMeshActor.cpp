@@ -47,6 +47,17 @@ void SkeletalMeshActor::UpdateDrawData(float deltaTime)
 void SkeletalMeshActor::Draw()
 {
   if (mesh) {
+    UploadLightList(mesh->GetShader());
     mesh->Draw();
+  }
+}
+
+/**
+* ‰e•`‰æ.
+*/
+void SkeletalMeshActor::DrawShadow()
+{
+  if (mesh) {
+    mesh->DrawShadow();
   }
 }

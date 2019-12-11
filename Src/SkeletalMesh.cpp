@@ -508,6 +508,58 @@ void SkeletalMesh::Draw() const
 }
 
 /**
+* スケルタルメッシュを描画する.
+*/
+void SkeletalMesh::DrawShadow() const
+{
+  if (!file) {
+    return;
+  }
+
+  // TODO: シーンレベルの描画に対応すること.
+  //std::vector<const Node*> meshNodes;
+  //meshNodes.reserve(32);
+  //GetMeshNodeList(node, meshNodes);
+
+  SkeletalAnimation::BindUniformData(uboOffset, uboSize);
+
+  const Mesh& meshData = file->meshes[node->mesh];
+  GLuint prevTexId = 0;
+  for (const auto& prim : meshData.primitives) {
+    prim.vao->Bind();
+
+    if (prim.material >= 0 && prim.material < static_cast<int>(file->materials.size())) {
+      const Material& m = file->materials[prim.material];
+      if (!m.progShadow) {
+        continue;
+      }
+      m.progShadow->Use();
+      for (int i = 0; i < sizeof(m.texture) / sizeof(m.texture[0]); ++i) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        if (m.texture[i]) {
+          glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
+        } else {
+          glBindTexture(GL_TEXTURE_1D, 0);
+          glBindTexture(GL_TEXTURE_BUFFER, 0);
+          glBindTexture(GL_TEXTURE_2D, 0);
+          glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+          glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        }
+      }
+      const GLint locMaterialColor = glGetUniformLocation(m.progShadow->Get(), "materialColor");
+      if (locMaterialColor >= 0) {
+        glUniform4fv(locMaterialColor, 1, &m.baseColor.x);
+      }
+      glDrawElementsBaseVertex(prim.mode, prim.count, prim.type, prim.indices, prim.baseVertex);
+    }
+  }
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glUseProgram(0);
+  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+/**
 * アニメーションの再生状態を取得する.
 *
 * @return 再生状態を示すState列挙型の値.
@@ -744,6 +796,17 @@ void SkeletalMesh::Loop(bool loop)
   this->loop = loop;
 }
 
+/**
+*
+*/
+Shader::ProgramPtr SkeletalMesh::GetShader() const
+{
+  if (file && !file->materials.empty()) {
+    return file->materials[0].progSkeletalMesh;
+  }
+  return nullptr;
+}
+
 namespace /* unnamed */ {
 
 /**
@@ -962,6 +1025,7 @@ bool Buffer::LoadSkeletalMesh(const char* path)
         tex = Texture::Image2D::Create(texturePath.c_str());
       }
       file.materials.push_back(CreateMaterial(col, tex));
+      file.materials.back().progShadow = progSkeletalShadow;
     }
   }
 

@@ -85,6 +85,7 @@ public:
 
   void Update(float deltaTime, const glm::mat4& matModel, const glm::vec4& color);
   void Draw() const;
+  void DrawShadow() const;
   const std::vector<Animation>& GetAnimationList() const;
   const std::string& GetAnimation() const;
   float GetTotalAnimationTime() const;
@@ -100,6 +101,8 @@ public:
   bool IsFinished() const;
   bool Loop() const;
   void Loop(bool);
+
+  Shader::ProgramPtr GetShader() const;
 
 private:
   ExtendedFilePtr file;

@@ -7,11 +7,13 @@ layout(location=0) in vec3 inPosition;
 layout(location=1) in vec2 inTexCoord;
 layout(location=2) in vec3 inTBN[3];
 layout(location=5) in vec3 inRawPosition;
+layout(location=6) in vec3 inShadowPosition;
 
 out vec4 fragColor;
 
 uniform sampler2D texColorArray[4];
 uniform sampler2D texNormalArray[3];
+uniform sampler2DShadow texShadow;
 uniform isamplerBuffer texPointLightIndex; // use texelFetch
 uniform isamplerBuffer texSpotLightIndex; // use texelFetch
 
@@ -73,11 +75,11 @@ void main()
 
   vec3 lightColor = ambientLight.color.rgb;
 
+  float shadow = max(texture(texShadow, inShadowPosition), 0.25);
   float power = max(dot(normal, -directionalLight.direction.xyz), 0.0);
-  lightColor += directionalLight.color.rgb * power;
-
+  lightColor += directionalLight.color.rgb * power * shadow;
   vec3 eyeVector = normalize(-vec3(0, 50, 25));
-  lightColor += directionalLight.color.rgb * pow(max(dot(eyeVector, reflect(-directionalLight.direction.xyz, normal)), 0), shininess) * power * normFactor;
+  lightColor += directionalLight.color.rgb * pow(max(dot(eyeVector, reflect(-directionalLight.direction.xyz, normal)), 0), shininess) * power * normFactor * shadow;
 
   int offset = int(inRawPosition.z) * mapSize.x + int(inRawPosition.x);
   ivec4 pointLightIndex = texelFetch(texPointLightIndex, offset);

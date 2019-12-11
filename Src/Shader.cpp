@@ -170,6 +170,7 @@ void Program::Reset(GLuint programId)
   if (id == 0) {
     locMatMVP = -1;
     locMatModel = -1;
+    locMatShadow = -1;
     locPointLightCount = -1;
     locPointLightIndex = -1;
     locSpotLightCount = -1;
@@ -184,6 +185,7 @@ void Program::Reset(GLuint programId)
 
   locMatMVP = glGetUniformLocation(id, "matMVP");
   locMatModel = glGetUniformLocation(id, "matModel");
+  locMatShadow = glGetUniformLocation(id, "matShadow");
   locPointLightCount = glGetUniformLocation(id, "pointLightCount");
   locPointLightIndex = glGetUniformLocation(id, "pointLightIndex");
   locSpotLightCount = glGetUniformLocation(id, "spotLightCount");
@@ -234,6 +236,11 @@ void Program::Reset(GLuint programId)
   if (locTexCubeMap >= 0) {
     glUniform1i(locTexCubeMap, 6);
   }
+  const GLint locTexShadow = glGetUniformLocation(id, "texShadow");
+  if (locTexShadow >= 0) {
+    glUniform1i(locTexShadow, 16);
+  }
+
   glUseProgram(0);
   if (GLenum error = glGetError()) {
     std::cout << "[エラー]" << std::hex << error << "\n";
@@ -295,6 +302,18 @@ void Program::SetModelMatrix(const glm::mat4& m)
 {
   if (locMatModel >= 0) {
     glUniformMatrix4fv(locMatModel, 1, GL_FALSE, &m[0][0]);
+  }
+}
+
+/**
+* 影の描画に使われるビュープロジェクション行列を設定する.
+*
+* @param m 設定する影用ビュープロジェクション行列.
+*/
+void Program::SetShadowViewProjectionMatrix(const glm::mat4& m)
+{
+  if (locMatShadow >= 0) {
+    glUniformMatrix4fv(locMatShadow, 1, GL_FALSE, &m[0][0]);
   }
 }
 

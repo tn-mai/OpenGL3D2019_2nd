@@ -116,14 +116,23 @@ void StaticMeshActor::Draw()
     const glm::mat4 matModel = matT * matR_XZY * matS;
 
     if (!mesh->materials.empty()) {
-      const Shader::ProgramPtr p = mesh->materials[0].program;
-      if (p) {
-        p->Use();
-        p->SetPointLightIndex(pointLightCount, pointLightIndex);
-        p->SetSpotLightIndex(spotLightCount, spotLightIndex);
-      }
+      UploadLightList(mesh->materials[0].program);
     }
     Mesh::Draw(mesh, matModel);
+  }
+}
+
+void StaticMeshActor::DrawShadow()
+{
+  if (mesh) {
+    const glm::mat4 matT = glm::translate(glm::mat4(1), position);
+    const glm::mat4 matR_Y = glm::rotate(glm::mat4(1), rotation.y, glm::vec3(0, 1, 0));
+    const glm::mat4 matR_ZY = glm::rotate(matR_Y, rotation.z, glm::vec3(0, 0, -1));
+    const glm::mat4 matR_XZY = glm::rotate(matR_ZY, rotation.x, glm::vec3(1, 0, 0));
+    const glm::mat4 matS = glm::scale(glm::mat4(1), scale);
+    const glm::mat4 matModel = matT * matR_XZY * matS;
+
+    Mesh::DrawShadow(mesh, matModel);
   }
 }
 
@@ -132,7 +141,7 @@ void StaticMeshActor::Draw()
 *
 * @param v ポイントライトのインデックス配列.
 */
-void StaticMeshActor::SetPointLightList(const std::vector<int>& v)
+void LightReceiver::SetPointLightList(const std::vector<int>& v)
 {
   pointLightCount = v.size();
   for (int i = 0; i < 8 && i < static_cast<int>(v.size()); ++i) {
@@ -145,11 +154,24 @@ void StaticMeshActor::SetPointLightList(const std::vector<int>& v)
 *
 * @param v スポットライトのインデックス配列.
 */
-void StaticMeshActor::SetSpotLightList(const std::vector<int>& v)
+void LightReceiver::SetSpotLightList(const std::vector<int>& v)
 {
   spotLightCount = v.size();
   for (int i = 0; i < 8 && i < static_cast<int>(v.size()); ++i) {
     spotLightIndex[i] = v[i];
+  }
+}
+
+/**
+*
+*/
+void LightReceiver::UploadLightList(const Shader::ProgramPtr& p)
+{
+  if (p) {
+    p->Use();
+    p->SetPointLightIndex(pointLightCount, pointLightIndex);
+    p->SetSpotLightIndex(spotLightCount, spotLightIndex);
+    glUseProgram(0);
   }
 }
 
@@ -265,6 +287,18 @@ void ActorList::Draw()
 }
 
 /**
+* Actorを描画する.
+*/
+void ActorList::DrawShadow()
+{
+  for (const ActorPtr& e : actors) {
+    if (e && e->health > 0) {
+      e->DrawShadow();
+    }
+  }
+}
+
+/**
 * 指定された座標の近傍にあるアクターのリストを取得する.
 *
 * @param pos         検索の基点となる座標.
@@ -277,9 +311,10 @@ std::vector<ActorPtr> ActorList::FindNearbyActors(const glm::vec3& pos, float ma
   std::vector<std::pair<float, ActorPtr>> buffer;
   buffer.reserve(1000);
 
+  const int range = 1;
   const glm::ivec2 mapIndex = CalcMapIndex(pos);
-  const glm::ivec2 min = glm::max(mapIndex - 1, 0);
-  const glm::ivec2 max = glm::min(mapIndex + 1, glm::ivec2(sepalationSizeX - 1, sepalationSizeY - 1));
+  const glm::ivec2 min = glm::max(mapIndex - range, 0);
+  const glm::ivec2 max = glm::min(mapIndex + range, glm::ivec2(sepalationSizeX - 1, sepalationSizeY - 1));
   for (int y = min.y; y <= max.y; ++y) {
     for (int x = min.x; x <= max.x; ++x) {
       const std::vector<ActorPtr>& list = grid[y][x];

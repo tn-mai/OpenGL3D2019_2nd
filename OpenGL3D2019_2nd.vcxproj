@@ -222,6 +222,8 @@
     <None Include="Res\DepthOfField.frag" />
     <None Include="Res\DepthOfField.vert" />
     <None Include="Res\GaussianBlur9.frag" />
+    <None Include="Res\Shadow.frag" />
+    <None Include="Res\ShadowWithTexture.frag" />
     <None Include="Res\Simple.frag" />
     <None Include="Res\Simple.vert" />
     <None Include="Res\SkeletalMesh.frag" />

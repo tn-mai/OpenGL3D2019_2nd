@@ -14,6 +14,19 @@
 class Actor;
 using ActorPtr = std::shared_ptr<Actor>;
 
+struct LightReceiver
+{
+  void SetPointLightList(const std::vector<int>& v);
+  void SetSpotLightList(const std::vector<int>& v);
+  void UploadLightList(const Shader::ProgramPtr&);
+
+  int pointLightCount = 0;
+  int pointLightIndex[8] = { -1 };
+
+  int spotLightCount = 0;
+  int spotLightIndex[8] = { -1 };
+};
+
 /**
 * シーンに配置するオブジェクト.
 */
@@ -27,6 +40,7 @@ public:
   virtual void Update(float);
   virtual void UpdateDrawData(float);
   virtual void Draw();
+  virtual void DrawShadow() {}
   virtual void OnHit(const ActorPtr&, const glm::vec3&) {}
 
 public:
@@ -44,7 +58,7 @@ using ActorPtr = std::shared_ptr<Actor>;
 /**
 * メッシュ表示機能付きのアクター.
 */
-class StaticMeshActor : public Actor
+class StaticMeshActor : public Actor, public LightReceiver
 {
 public:
   StaticMeshActor(const Mesh::FilePtr& m, const std::string& name, int hp,
@@ -53,19 +67,12 @@ public:
   virtual ~StaticMeshActor() = default;
 
   virtual void Draw() override;
+  virtual void DrawShadow() override;
 
   const Mesh::FilePtr& GetMesh() const { return mesh; }
-  void SetPointLightList(const std::vector<int>& v);
-  void SetSpotLightList(const std::vector<int>& v);
 
 private:
   Mesh::FilePtr mesh;
-
-  int pointLightCount = 0;
-  int pointLightIndex[8] = { -1 };
-
-  int spotLightCount = 0;
-  int spotLightIndex[8] = { -1 };
 };
 using StaticMeshActorPtr = std::shared_ptr<StaticMeshActor>;
 
@@ -88,6 +95,7 @@ public:
   void Update(float);
   void UpdateDrawData(float);
   void Draw();
+  void DrawShadow();
   bool Empty() const { return actors.empty(); }
 
   // イテレーターを取得する関数.

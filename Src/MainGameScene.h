@@ -83,6 +83,8 @@ private:
   FrameBufferObjectPtr fboMain;
   FrameBufferObjectPtr fboDepthOfField;
   FrameBufferObjectPtr fboBloom[6][2];
+
+  FrameBufferObjectPtr fboShadow;
 };
 
 #endif // MAINGAMESCENE_H_INCLUDED

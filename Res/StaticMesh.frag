@@ -6,10 +6,13 @@
 layout(location=0) in vec3 inPosition;
 layout(location=1) in vec2 inTexCoord;
 layout(location=2) in vec3 inNormal;
+layout(location=3) in vec3 inShadowPosition;
 
 out vec4 fragColor;
 
 uniform sampler2D texColor;
+
+uniform sampler2DShadow texShadow;
 
 uniform int pointLightCount;
 uniform int pointLightIndex[8];
@@ -59,12 +62,14 @@ void main()
     discard;
   }
 
-  vec3 normal = normalize(inNormal);
 
   vec3 lightColor = ambientLight.color.rgb;
 
+  vec3 normal = normalize(inNormal);
+
+  float shadow = max(texture(texShadow, inShadowPosition), 0.25);
   float power = max(dot(normal, -directionalLight.direction.xyz), 0.0);
-  lightColor += directionalLight.color.rgb * power;
+  lightColor += directionalLight.color.rgb * power * shadow;
 
   for (int i = 0; i < pointLightCount; ++i) {
     int id = pointLightIndex[i];

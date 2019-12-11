@@ -48,6 +48,7 @@ struct Material
   Texture::InterfacePtr texture[16];
   Shader::ProgramPtr program;
   Shader::ProgramPtr progSkeletalMesh; // スケルタルメッシュ用のシェーダー.
+  Shader::ProgramPtr progShadow;
 };
 
 /**
@@ -105,6 +106,7 @@ public:
   bool LoadMesh(const char* path);
   FilePtr GetFile(const char* name) const;
   void SetViewProjectionMatrix(const glm::mat4&) const;
+  void SetShadowViewProjectionMatrix(const glm::mat4&) const;
   void SetCameraPosition(const glm::vec3&) const;
   void SetTime(double) const;
 
@@ -118,6 +120,9 @@ public:
   const Shader::ProgramPtr& GetStaticMeshShader() const { return progStaticMesh; }
   const Shader::ProgramPtr& GetTerrainShader() const { return progTerrain; }
   const Shader::ProgramPtr& GetWaterShader() const { return progWater; }
+  const Shader::ProgramPtr& GetSkeletalMeshShader() const { return progSkeletalMesh; }
+  const Shader::ProgramPtr& GetShadowShader() const { return progShadow; }
+  const Shader::ProgramPtr& GetSkeletalShadowShader() const { return progSkeletalShadow; }
 
 private:
   BufferObject vbo;
@@ -128,6 +133,8 @@ private:
   Shader::ProgramPtr progStaticMesh;
   Shader::ProgramPtr progTerrain;
   Shader::ProgramPtr progWater;
+  Shader::ProgramPtr progShadow;
+  Shader::ProgramPtr progSkeletalShadow;
 
   // スケルタル・アニメーションに対応したメッシュを保持するメンバ変数.
   Shader::ProgramPtr progSkeletalMesh;
@@ -140,6 +147,7 @@ private:
 };
 
 void Draw(const FilePtr&, const glm::mat4& matM);
+void DrawShadow(const FilePtr&, const glm::mat4& matM);
 
 } // namespace Mesh
 

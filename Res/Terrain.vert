@@ -11,9 +11,11 @@ layout(location=0) out vec3 outPosition;
 layout(location=1) out vec2 outTexCoord;
 layout(location=2) out vec3 outTBN[3];
 layout(location=5) out vec3 outRawPosition;
+layout(location=6) out vec3 outShadowPosition;
 
 uniform mat4 matMVP;
 uniform mat4 matModel;
+uniform mat4 matShadow;
 
 /**
 * Terrain vertex shader.
@@ -32,6 +34,7 @@ void main()
   outTexCoord = vTexCoord;
 
   outPosition = vec3(matModel * vec4(vPosition, 1.0));
+  outShadowPosition = vec3(matShadow * vec4(outPosition, 1.0)) * 0.5 + vec3(0.5, 0.5, 0.5 - 0.0005);
   outRawPosition = vPosition;
   gl_Position = matMVP * (matModel * vec4(vPosition, 1.0));
 }

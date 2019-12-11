@@ -202,6 +202,12 @@ bool Buffer::Init(GLsizeiptr vboSize, GLsizeiptr iboSize)
     return false;
   }
 
+  progShadow  = Shader::Program::Create("Res/StaticMesh.vert", "Res/Shadow.frag");
+  progSkeletalShadow  = Shader::Program::Create("Res/SkeletalMesh.vert", "Res/Shadow.frag");
+  if (progShadow->IsNull() || progSkeletalShadow->IsNull()) {
+    return false;
+  }
+
   vboEnd = 0;
   iboEnd = 0;
   files.reserve(100);
@@ -300,6 +306,7 @@ Material Buffer::CreateMaterial(
   m.texture[0] = texture;
   m.program = progStaticMesh;
   m.progSkeletalMesh = progSkeletalMesh;
+  m.progShadow = progShadow;
   return m;
 }
 
@@ -639,6 +646,28 @@ void Buffer::SetViewProjectionMatrix(const glm::mat4& matVP) const
 }
 
 /**
+* シェーダに影用のビュー・プロジェクション行列を設定する.
+*
+* @param matVP 影用ビュー・プロジェクション行列.
+*/
+void Buffer::SetShadowViewProjectionMatrix(const glm::mat4& matVP) const
+{
+  progStaticMesh->Use();
+  progStaticMesh->SetShadowViewProjectionMatrix(matVP);
+  progSkeletalMesh->Use();
+  progSkeletalMesh->SetShadowViewProjectionMatrix(matVP);
+  progTerrain->Use();
+  progTerrain->SetShadowViewProjectionMatrix(matVP);
+  progWater->Use();
+  progWater->SetShadowViewProjectionMatrix(matVP);
+  progShadow->Use();
+  progShadow->SetViewProjectionMatrix(matVP);
+  progSkeletalShadow->Use();
+  progSkeletalShadow->SetViewProjectionMatrix(matVP);
+  glUseProgram(0);
+}
+
+/**
 * シェーダーにカメラのワールド座標を設定する.
 *
 * @param pos カメラのワールド座標.
@@ -690,11 +719,17 @@ void Draw(const FilePtr& file, const glm::mat4& matM)
   const Mesh& mesh = file->meshes[0];
   for (const Primitive& p : mesh.primitives) {
     if (p.material < static_cast<int>(file->materials.size())) {
+      if (const GLenum error = glGetError()) {
+        std::cout << "[エラー]" << std::hex << error << "\n";
+      }
+
       p.vao->Bind();
       const Material& m = file->materials[p.material];
       m.program->Use();
       m.program->SetModelMatrix(matM);
-      glActiveTexture(GL_TEXTURE0);
+      if (const GLenum error = glGetError()) {
+        std::cout << "[エラー]" << std::hex << error << "\n";
+      }
 
       // テクスチャがあるときは、そのテクスチャIDを設定する. ないときは0を設定する.
       for (int i = 0; i < sizeof(m.texture)/sizeof(m.texture[0]); ++i) {
@@ -702,11 +737,13 @@ void Draw(const FilePtr& file, const glm::mat4& matM)
         if (m.texture[i]) {
           glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
         } else {
-          glBindTexture(GL_TEXTURE_1D, 0);
+          glBindTexture(GL_TEXTURE_2D, 0);
+          glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+          glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+          glBindTexture(GL_TEXTURE_BUFFER, 0);
         }
       }
-      const GLenum error = glGetError();
-      if (error) {
+      if (const GLenum error = glGetError()) {
         std::cout << "[エラー]" << std::hex << error << "\n";
       }
 
@@ -716,6 +753,50 @@ void Draw(const FilePtr& file, const glm::mat4& matM)
   }
 //  glActiveTexture(GL_TEXTURE0);
 //  glBindTexture(GL_TEXTURE_2D, 0);
+  glUseProgram(0);
+}
+
+void DrawShadow(const FilePtr& file, const glm::mat4& matM)
+{
+  if (!file || file->meshes.empty() || file->materials.empty()) {
+    return;
+  }
+
+  const Mesh& mesh = file->meshes[0];
+  for (const Primitive& p : mesh.primitives) {
+    if (p.material < static_cast<int>(file->materials.size())) {
+      if (const GLenum error = glGetError()) {
+        std::cout << "[エラー]" << std::hex << error << "\n";
+      }
+
+      p.vao->Bind();
+      const Material& m = file->materials[p.material];
+      m.progShadow->Use();
+      m.progShadow->SetModelMatrix(matM);
+      if (const GLenum error = glGetError()) {
+        std::cout << "[エラー]" << std::hex << error << "\n";
+      }
+
+      // テクスチャがあるときは、そのテクスチャIDを設定する. ないときは0を設定する.
+      for (int i = 0; i < sizeof(m.texture)/sizeof(m.texture[0]); ++i) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        if (m.texture[i]) {
+          glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
+        } else {
+          glBindTexture(GL_TEXTURE_2D, 0);
+          glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+          glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+          glBindTexture(GL_TEXTURE_BUFFER, 0);
+        }
+      }
+      if (const GLenum error = glGetError()) {
+        std::cout << "[エラー]" << std::hex << error << "\n";
+      }
+
+      glDrawElementsBaseVertex(p.mode, p.count, p.type, p.indices, p.baseVertex);
+      p.vao->Unbind();
+    }
+  }
   glUseProgram(0);
 }
 
