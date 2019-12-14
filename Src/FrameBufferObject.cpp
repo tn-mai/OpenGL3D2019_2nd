@@ -35,10 +35,6 @@ FrameBufferObjectPtr FrameBufferObject::Create(int w, int h, GLenum internalForm
   if (type != FrameBufferType::colorOnly) {
     fbo->texDepth = std::make_shared<Texture::Image2D>(Texture::CreateImage2D(w, h, nullptr, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_COMPONENT32F));
     fbo->texDepth->SetWrapMode(GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, fbo->texDepth->Get());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-    glBindTexture(GL_TEXTURE_2D, 0);
   }
 
   // フレームバッファを作成する.

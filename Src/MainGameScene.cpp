@@ -124,10 +124,17 @@ bool MainGameScene::Initialize()
   }
 
   // シャドウ用FBOを作成する.
-  fboShadow = FrameBufferObject::Create(4096, 4096, GL_RGBA8, FrameBufferType::depthOnly);
-  if (glGetError()) {
-    std::cout << "[エラー]" << __func__ << ":シャドウ用FBOの作成に失敗.\n";
-    return false;
+  {
+    fboShadow = FrameBufferObject::Create(4096, 4096, GL_NONE, FrameBufferType::depthOnly);
+    if (glGetError()) {
+      std::cout << "[エラー]" << __func__ << ":シャドウ用FBOの作成に失敗.\n";
+      return false;
+    }
+    // sampler2DShadowのためにテクスチャ比較モードを設定する.
+    glBindTexture(GL_TEXTURE_2D, fboShadow->GetDepthTexture()->Get());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glBindTexture(GL_TEXTURE_2D, 0);
   }
 
   // ハイトマップを作成する.
