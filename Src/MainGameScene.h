@@ -34,6 +34,8 @@ public:
   bool HandleJizoEffects(int id, const glm::vec3& pos);
 
 private:
+  void RenderMesh(Mesh::DrawType);
+
   std::mt19937 rand;
   int jizoId = -1; ///< Œ»Ýí“¬’†‚Ì‚¨’n‘ —l‚ÌID.
   bool achivements[4] = { false, false, false, false }; ///< “G“¢”°ó‘Ô.

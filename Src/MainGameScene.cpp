@@ -456,6 +456,34 @@ void MainGameScene::Update(float deltaTime)
 }
 
 /**
+* ÉÅÉbÉVÉÖÇï`âÊÇ∑ÇÈ.
+*/
+void MainGameScene::RenderMesh(Mesh::DrawType drawType)
+{
+  glm::vec3 cubePos(100, 0, 100);
+  cubePos.y = heightMap.Height(cubePos);
+  const glm::mat4 matModel = glm::translate(glm::mat4(1), cubePos);
+  Mesh::Draw(meshBuffer.GetFile("Cube"), matModel, drawType);
+  Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1), drawType);
+
+  player->Draw(drawType);
+  enemies.Draw(drawType);
+  trees.Draw(drawType);
+  objects.Draw(drawType);
+
+  glm::vec3 treePos(110, 0, 110);
+  treePos.y = heightMap.Height(treePos);
+  const glm::mat4 matTreeModel =
+    glm::translate(glm::mat4(1), treePos) * glm::scale(glm::mat4(1), glm::vec3(3));
+  Mesh::Draw(meshBuffer.GetFile("Res/red_pine_tree.gltf"), matTreeModel, drawType);
+
+  if (drawType == Mesh::DrawType::color) {
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1), drawType);
+  }
+}
+
+/**
 * ÉVÅ[ÉìÇï`âÊÇ∑ÇÈ.
 */
 void MainGameScene::Render()
@@ -481,12 +509,7 @@ void MainGameScene::Render()
     const glm::mat4 matProj = glm::ortho<float>(-w / 2, w / 2, -h / 2, h / 2, 10.0f, 500.0f);
     meshBuffer.SetShadowViewProjectionMatrix(matProj * matView);
 
-    const Mesh::DrawType drawType = Mesh::DrawType::shadow;
-    Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1), drawType);
-    player->Draw(drawType);
-    enemies.Draw(drawType);
-    trees.Draw(drawType);
-    objects.Draw(drawType);
+    RenderMesh(Mesh::DrawType::shadow);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());
@@ -512,44 +535,11 @@ void MainGameScene::Render()
   meshBuffer.SetViewProjectionMatrix(matProj * matView);
   meshBuffer.SetCameraPosition(camera.position);
   meshBuffer.SetTime(window.Time());
+  meshBuffer.BindShadowTexture(fboShadow->GetDepthTexture());
 
-  glActiveTexture(GL_TEXTURE0 + 16);
-  glBindTexture(GL_TEXTURE_2D, fboShadow->GetDepthTexture()->Get());
+  RenderMesh(Mesh::DrawType::color);
 
-  glm::vec3 cubePos(100, 0, 100);
-  cubePos.y = heightMap.Height(cubePos);
-  const glm::mat4 matModel = glm::translate(glm::mat4(1), cubePos);
-  Mesh::Draw(meshBuffer.GetFile("Cube"), matModel);
-
-#if 0
-  StaticMeshActorPtr pTerrain = std::make_shared<StaticMeshActor>(meshBuffer.GetFile("Terrain"), "Terrain", 100, glm::vec3(0), glm::vec3(0, 0, 0));
-  std::vector<int> tmp;
-  for (int i = 0; i < 8; ++i) {
-    tmp.push_back(i);
-  }
-  pTerrain->SetPointLightList(tmp);
-  pTerrain->SetSpotLightList(tmp);
-  pTerrain->Draw();
-#else
-  Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1));
-#endif
-
-  player->Draw();
-  enemies.Draw();
-  trees.Draw();
-  objects.Draw();
-
-  glm::vec3 treePos(110, 0, 110);
-  treePos.y = heightMap.Height(treePos);
-  const glm::mat4 matTreeModel =
-    glm::translate(glm::mat4(1), treePos) * glm::scale(glm::mat4(1), glm::vec3(3));
-  Mesh::Draw(meshBuffer.GetFile("Res/red_pine_tree.gltf"), matTreeModel);
-
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1));
-
-  glActiveTexture(GL_TEXTURE0 + 16);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  meshBuffer.UnbindShadowTexture();
 
   // îÌé äEê[ìx.
   {

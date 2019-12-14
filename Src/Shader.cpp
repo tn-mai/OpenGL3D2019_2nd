@@ -238,7 +238,7 @@ void Program::Reset(GLuint programId)
   }
   const GLint locTexShadow = glGetUniformLocation(id, "texShadow");
   if (locTexShadow >= 0) {
-    glUniform1i(locTexShadow, 16);
+    glUniform1i(locTexShadow, shadowTextureBindingPoint);
   }
 
   glUseProgram(0);

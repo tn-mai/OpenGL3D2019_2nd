@@ -109,6 +109,8 @@ public:
   void SetShadowViewProjectionMatrix(const glm::mat4&) const;
   void SetCameraPosition(const glm::vec3&) const;
   void SetTime(double) const;
+  void BindShadowTexture(const Texture::InterfacePtr&);
+  void UnbindShadowTexture();
 
   void AddCube(const char* name);
   FilePtr AddPlane(const char* name);
@@ -146,6 +148,8 @@ private:
   };
   std::unordered_map<std::string, MeshIndex> meshes;
   std::unordered_map<std::string, ExtendedFilePtr> extendedFiles;
+
+  GLenum shadowTextureTarget = GL_NONE;
 };
 
 /**

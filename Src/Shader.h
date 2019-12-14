@@ -45,6 +45,8 @@ public:
   /// ƒvƒƒOƒ‰ƒ€ID‚ğæ“¾‚·‚é.
   GLuint Get() const { return id; }
 
+  static const GLint shadowTextureBindingPoint = 16;
+
 private:
   std::string vsName;
   std::string fsName;

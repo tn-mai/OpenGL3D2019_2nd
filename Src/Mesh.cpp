@@ -708,6 +708,30 @@ void Buffer::SetTime(double time) const
 }
 
 /**
+* 影用テクスチャをGLコンテキストに割り当てる.
+*
+* @param tex  影用テクスチャ.
+*/
+void Buffer::BindShadowTexture(const Texture::InterfacePtr& texture)
+{
+  shadowTextureTarget = texture->Target();
+  glActiveTexture(GL_TEXTURE0 + Shader::Program::shadowTextureBindingPoint);
+  glBindTexture(shadowTextureTarget, texture->Get());
+}
+
+/**
+* 影用テクスチャの割り当てを解除する.
+*/
+void Buffer::UnbindShadowTexture()
+{
+  if (shadowTextureTarget != GL_NONE) {
+    glActiveTexture(GL_TEXTURE0 + Shader::Program::shadowTextureBindingPoint);
+    glBindTexture(shadowTextureTarget, 0);
+    shadowTextureTarget = GL_NONE;
+  }
+}
+
+/**
 * メッシュを描画する.
 *
 * @param file 描画するファイル.
