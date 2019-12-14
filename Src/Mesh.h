@@ -122,6 +122,7 @@ public:
   const Shader::ProgramPtr& GetWaterShader() const { return progWater; }
   const Shader::ProgramPtr& GetSkeletalMeshShader() const { return progSkeletalMesh; }
   const Shader::ProgramPtr& GetShadowShader() const { return progShadow; }
+  const Shader::ProgramPtr& GetNonTexturedShadowShader() const { return progNonTexturedShadow; }
   const Shader::ProgramPtr& GetSkeletalShadowShader() const { return progSkeletalShadow; }
 
 private:
@@ -134,6 +135,7 @@ private:
   Shader::ProgramPtr progTerrain;
   Shader::ProgramPtr progWater;
   Shader::ProgramPtr progShadow;
+  Shader::ProgramPtr progNonTexturedShadow;
   Shader::ProgramPtr progSkeletalShadow;
 
   // スケルタル・アニメーションに対応したメッシュを保持するメンバ変数.
@@ -146,8 +148,14 @@ private:
   std::unordered_map<std::string, ExtendedFilePtr> extendedFiles;
 };
 
-void Draw(const FilePtr&, const glm::mat4& matM);
-void DrawShadow(const FilePtr&, const glm::mat4& matM);
+/**
+* 描画する情報の種類.
+*/
+enum class DrawType {
+  color,
+  shadow,
+};
+void Draw(const FilePtr&, const glm::mat4& matM, DrawType = DrawType::color);
 
 } // namespace Mesh
 

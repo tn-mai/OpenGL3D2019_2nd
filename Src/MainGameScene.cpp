@@ -481,11 +481,12 @@ void MainGameScene::Render()
     const glm::mat4 matProj = glm::ortho<float>(-w / 2, w / 2, -h / 2, h / 2, 10.0f, 500.0f);
     meshBuffer.SetShadowViewProjectionMatrix(matProj * matView);
 
-    Mesh::DrawShadow(meshBuffer.GetFile("Terrain"), glm::mat4(1));
-    player->DrawShadow();
-    enemies.DrawShadow();
-    trees.DrawShadow();
-    objects.DrawShadow();
+    const Mesh::DrawType drawType = Mesh::DrawType::shadow;
+    Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1), drawType);
+    player->Draw(drawType);
+    enemies.Draw(drawType);
+    trees.Draw(drawType);
+    objects.Draw(drawType);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());

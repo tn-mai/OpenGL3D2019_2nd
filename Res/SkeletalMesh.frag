@@ -7,7 +7,7 @@ layout(location=0) in vec4 inColor;
 layout(location=1) in vec2 inTexCoord;
 layout(location=2) in vec3 inNormal;
 layout(location=3) in vec3 inPosition;
-layout(location=4) in vec3 inShadowCoord;
+layout(location=4) in vec3 inShadowPosition;
 
 out vec4 fragColor;
 
@@ -23,7 +23,8 @@ void main()
   if (fragColor.a < 0.1) {
     discard;
   }
-  float shadow = max(texture(texShadow, inShadowCoord), 0.25);
+
+  float shadow = texture(texShadow, inShadowPosition) * 0.75 + 0.25;
   vec3 ambientColor = vec3(0.1, 0.1, 0.2);
   vec3 vLight = normalize(vec3(1, -1.5, -1));
   float power = max(dot(normalize(inNormal), -vLight), 0.0);

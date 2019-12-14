@@ -84,8 +84,7 @@ public:
   SkeletalMesh(const ExtendedFilePtr& f, const Node* n);
 
   void Update(float deltaTime, const glm::mat4& matModel, const glm::vec4& color);
-  void Draw() const;
-  void DrawShadow() const;
+  void Draw(DrawType = DrawType::color) const;
   const std::vector<Animation>& GetAnimationList() const;
   const std::string& GetAnimation() const;
   float GetTotalAnimationTime() const;

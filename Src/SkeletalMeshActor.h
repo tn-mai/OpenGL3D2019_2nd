@@ -17,8 +17,7 @@ public:
   virtual ~SkeletalMeshActor() = default;
 
   virtual void UpdateDrawData(float) override;
-  virtual void Draw() override;
-  virtual void DrawShadow() override;
+  virtual void Draw(Mesh::DrawType = Mesh::DrawType::color) override;
 
   const Mesh::SkeletalMeshPtr& GetMesh() const { return mesh; }
 

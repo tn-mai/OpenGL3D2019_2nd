@@ -485,7 +485,12 @@ void Program::SetBlurDirection(float x, float y)
 */
 ProgramPtr Program::Create(const char* vsPath, const char* fsPath)
 {
-  return std::make_shared<Program>(BuildFromFile(vsPath, fsPath));
+  auto p = std::make_shared<Program>(BuildFromFile(vsPath, fsPath));
+  if (p) {
+    p->vsName = vsPath;
+    p->fsName = fsPath;
+  }
+  return p;
 }
 
 } // namespace Shader

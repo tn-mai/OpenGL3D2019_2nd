@@ -203,8 +203,9 @@ bool Buffer::Init(GLsizeiptr vboSize, GLsizeiptr iboSize)
   }
 
   progShadow  = Shader::Program::Create("Res/StaticMesh.vert", "Res/Shadow.frag");
+  progNonTexturedShadow  = Shader::Program::Create("Res/StaticMesh.vert", "Res/NonTexturedShadow.frag");
   progSkeletalShadow  = Shader::Program::Create("Res/SkeletalMesh.vert", "Res/Shadow.frag");
-  if (progShadow->IsNull() || progSkeletalShadow->IsNull()) {
+  if (progShadow->IsNull() || progNonTexturedShadow->IsNull() || progSkeletalShadow->IsNull()) {
     return false;
   }
 
@@ -662,6 +663,8 @@ void Buffer::SetShadowViewProjectionMatrix(const glm::mat4& matVP) const
   progWater->SetShadowViewProjectionMatrix(matVP);
   progShadow->Use();
   progShadow->SetViewProjectionMatrix(matVP);
+  progNonTexturedShadow->Use();
+  progNonTexturedShadow->SetViewProjectionMatrix(matVP);
   progSkeletalShadow->Use();
   progSkeletalShadow->SetViewProjectionMatrix(matVP);
   glUseProgram(0);
@@ -709,8 +712,9 @@ void Buffer::SetTime(double time) const
 *
 * @param file 描画するファイル.
 * @param matM  描画に使用するモデル行列.
+* @param type  描画する
 */
-void Draw(const FilePtr& file, const glm::mat4& matM)
+void Draw(const FilePtr& file, const glm::mat4& matM, DrawType type)
 {
   if (!file || file->meshes.empty() || file->materials.empty()) {
     return;
@@ -725,8 +729,12 @@ void Draw(const FilePtr& file, const glm::mat4& matM)
 
       p.vao->Bind();
       const Material& m = file->materials[p.material];
-      m.program->Use();
-      m.program->SetModelMatrix(matM);
+      Shader::ProgramPtr program = m.program;
+      if (type == DrawType::shadow) {
+        program = m.progShadow;
+      }
+      program->Use();
+      program->SetModelMatrix(matM);
       if (const GLenum error = glGetError()) {
         std::cout << "[エラー]" << std::hex << error << "\n";
       }
@@ -753,50 +761,6 @@ void Draw(const FilePtr& file, const glm::mat4& matM)
   }
 //  glActiveTexture(GL_TEXTURE0);
 //  glBindTexture(GL_TEXTURE_2D, 0);
-  glUseProgram(0);
-}
-
-void DrawShadow(const FilePtr& file, const glm::mat4& matM)
-{
-  if (!file || file->meshes.empty() || file->materials.empty()) {
-    return;
-  }
-
-  const Mesh& mesh = file->meshes[0];
-  for (const Primitive& p : mesh.primitives) {
-    if (p.material < static_cast<int>(file->materials.size())) {
-      if (const GLenum error = glGetError()) {
-        std::cout << "[エラー]" << std::hex << error << "\n";
-      }
-
-      p.vao->Bind();
-      const Material& m = file->materials[p.material];
-      m.progShadow->Use();
-      m.progShadow->SetModelMatrix(matM);
-      if (const GLenum error = glGetError()) {
-        std::cout << "[エラー]" << std::hex << error << "\n";
-      }
-
-      // テクスチャがあるときは、そのテクスチャIDを設定する. ないときは0を設定する.
-      for (int i = 0; i < sizeof(m.texture)/sizeof(m.texture[0]); ++i) {
-        glActiveTexture(GL_TEXTURE0 + i);
-        if (m.texture[i]) {
-          glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
-        } else {
-          glBindTexture(GL_TEXTURE_2D, 0);
-          glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-          glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-          glBindTexture(GL_TEXTURE_BUFFER, 0);
-        }
-      }
-      if (const GLenum error = glGetError()) {
-        std::cout << "[エラー]" << std::hex << error << "\n";
-      }
-
-      glDrawElementsBaseVertex(p.mode, p.count, p.type, p.indices, p.baseVertex);
-      p.vao->Unbind();
-    }
-  }
   glUseProgram(0);
 }
 

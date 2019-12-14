@@ -75,7 +75,7 @@ void main()
 
   vec3 lightColor = ambientLight.color.rgb;
 
-  float shadow = max(texture(texShadow, inShadowPosition), 0.25);
+  float shadow = texture(texShadow, inShadowPosition) * 0.75 + 0.25;
   float power = max(dot(normal, -directionalLight.direction.xyz), 0.0);
   lightColor += directionalLight.color.rgb * power * shadow;
   vec3 eyeVector = normalize(-vec3(0, 50, 25));

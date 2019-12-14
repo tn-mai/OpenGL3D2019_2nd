@@ -39,8 +39,8 @@ public:
 
   virtual void Update(float);
   virtual void UpdateDrawData(float);
-  virtual void Draw();
-  virtual void DrawShadow() {}
+
+  virtual void Draw(Mesh::DrawType = Mesh::DrawType::color);
   virtual void OnHit(const ActorPtr&, const glm::vec3&) {}
 
 public:
@@ -66,8 +66,7 @@ public:
     const glm::vec3& scale = glm::vec3(1));
   virtual ~StaticMeshActor() = default;
 
-  virtual void Draw() override;
-  virtual void DrawShadow() override;
+  virtual void Draw(Mesh::DrawType) override;
 
   const Mesh::FilePtr& GetMesh() const { return mesh; }
 
@@ -94,8 +93,7 @@ public:
   bool Remove(const ActorPtr&);
   void Update(float);
   void UpdateDrawData(float);
-  void Draw();
-  void DrawShadow();
+  void Draw(Mesh::DrawType = Mesh::DrawType::color);
   bool Empty() const { return actors.empty(); }
 
   // イテレーターを取得する関数.

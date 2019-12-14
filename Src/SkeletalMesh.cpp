@@ -460,8 +460,10 @@ void SkeletalMesh::Update(float deltaTime, const glm::mat4& matModel, const glm:
 
 /**
 * スケルタルメッシュを描画する.
+*
+* @param drawType 描画するデータの種類.
 */
-void SkeletalMesh::Draw() const
+void SkeletalMesh::Draw(DrawType drawType) const
 {
   if (!file) {
     return;
@@ -481,10 +483,14 @@ void SkeletalMesh::Draw() const
 
     if (prim.material >= 0 && prim.material < static_cast<int>(file->materials.size())) {
       const Material& m = file->materials[prim.material];
-      if (!m.progSkeletalMesh) {
+      Shader::ProgramPtr program = m.progSkeletalMesh;
+      if (drawType == DrawType::shadow) {
+        program = m.progShadow;
+      }
+      if (!program) {
         continue;
       }
-      m.progSkeletalMesh->Use();
+      program->Use();
       for (int i = 0; i < sizeof(m.texture) / sizeof(m.texture[0]); ++i) {
         glActiveTexture(GL_TEXTURE0 + i);
         if (m.texture[i]) {
@@ -493,7 +499,7 @@ void SkeletalMesh::Draw() const
           glBindTexture(GL_TEXTURE_1D, 0);
         }
       }
-      const GLint locMaterialColor = glGetUniformLocation(m.progSkeletalMesh->Get(), "materialColor");
+      const GLint locMaterialColor = glGetUniformLocation(program->Get(), "materialColor");
       if (locMaterialColor >= 0) {
         glUniform4fv(locMaterialColor, 1, &m.baseColor.x);
       }
@@ -507,58 +513,6 @@ void SkeletalMesh::Draw() const
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-/**
-* スケルタルメッシュを描画する.
-*/
-void SkeletalMesh::DrawShadow() const
-{
-  if (!file) {
-    return;
-  }
-
-  // TODO: シーンレベルの描画に対応すること.
-  //std::vector<const Node*> meshNodes;
-  //meshNodes.reserve(32);
-  //GetMeshNodeList(node, meshNodes);
-
-  SkeletalAnimation::BindUniformData(uboOffset, uboSize);
-
-  const Mesh& meshData = file->meshes[node->mesh];
-  GLuint prevTexId = 0;
-  for (const auto& prim : meshData.primitives) {
-    prim.vao->Bind();
-
-    if (prim.material >= 0 && prim.material < static_cast<int>(file->materials.size())) {
-      const Material& m = file->materials[prim.material];
-      if (!m.progShadow) {
-        continue;
-      }
-      m.progShadow->Use();
-      for (int i = 0; i < sizeof(m.texture) / sizeof(m.texture[0]); ++i) {
-        glActiveTexture(GL_TEXTURE0 + i);
-        if (m.texture[i]) {
-          glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
-        } else {
-          glBindTexture(GL_TEXTURE_1D, 0);
-          glBindTexture(GL_TEXTURE_BUFFER, 0);
-          glBindTexture(GL_TEXTURE_2D, 0);
-          glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-          glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-        }
-      }
-      const GLint locMaterialColor = glGetUniformLocation(m.progShadow->Get(), "materialColor");
-      if (locMaterialColor >= 0) {
-        glUniform4fv(locMaterialColor, 1, &m.baseColor.x);
-      }
-      glDrawElementsBaseVertex(prim.mode, prim.count, prim.type, prim.indices, prim.baseVertex);
-    }
-  }
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glUseProgram(0);
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
 /**
 * アニメーションの再生状態を取得する.
 *

@@ -179,6 +179,7 @@ bool HeightMap::CreateMesh(
   m.texture[9] = Texture::Image2D::Create("Res/Terrain_Rock_Normal.tga");
   m.texture[10] = Texture::Image2D::Create("Res/Terrain_Plant_Normal.tga");
   m.program = meshBuffer.GetTerrainShader();
+  m.progShadow = meshBuffer.GetNonTexturedShadowShader();
   meshBuffer.AddMesh(meshName, p, m);
 
   return true;
@@ -250,6 +251,7 @@ bool HeightMap::CreateWaterMesh(Mesh::Buffer& meshBuffer, const char* meshName, 
   m.texture[6] = Texture::Cube::Create(cubeMapFiles);
   m.texture[8] = Texture::Image2D::Create("Res/Terrain_Water_Normal.tga");
   m.program = meshBuffer.GetWaterShader();
+  m.progShadow = meshBuffer.GetNonTexturedShadowShader();
   meshBuffer.AddMesh(meshName, p, m);
 
   return true;

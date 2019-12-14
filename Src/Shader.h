@@ -7,6 +7,7 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 #include <memory>
+#include <string>
 
 namespace Shader {
 
@@ -45,6 +46,8 @@ public:
   GLuint Get() const { return id; }
 
 private:
+  std::string vsName;
+  std::string fsName;
   GLuint id = 0; //ƒvƒƒOƒ‰ƒ€ID
 
   //// uniform•Ï”‚ÌˆÊ’u
