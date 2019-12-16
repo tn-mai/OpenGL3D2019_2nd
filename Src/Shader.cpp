@@ -294,18 +294,6 @@ void Program::SetViewProjectionMatrix(const glm::mat4& matVP)
 }
 
 /**
-* 描画に使われるモデル行列を設定する.
-*
-* @param m 設定するモデル行列.
-*/
-void Program::SetModelMatrix(const glm::mat4& m)
-{
-  if (locMatModel >= 0) {
-    glUniformMatrix4fv(locMatModel, 1, GL_FALSE, &m[0][0]);
-  }
-}
-
-/**
 * 影の描画に使われるビュープロジェクション行列を設定する.
 *
 * @param m 設定する影用ビュープロジェクション行列.
@@ -314,6 +302,18 @@ void Program::SetShadowViewProjectionMatrix(const glm::mat4& m)
 {
   if (locMatShadow >= 0) {
     glUniformMatrix4fv(locMatShadow, 1, GL_FALSE, &m[0][0]);
+  }
+}
+
+/**
+* 描画に使われるモデル行列を設定する.
+*
+* @param m 設定するモデル行列.
+*/
+void Program::SetModelMatrix(const glm::mat4& m)
+{
+  if (locMatModel >= 0) {
+    glUniformMatrix4fv(locMatModel, 1, GL_FALSE, &m[0][0]);
   }
 }
 
