@@ -978,8 +978,9 @@ bool Buffer::LoadSkeletalMesh(const char* path)
       if (!texturePath.empty()) {
         tex = Texture::Image2D::Create(texturePath.c_str());
       }
-      file.materials.push_back(CreateMaterial(col, tex));
-      file.materials.back().progShadow = progSkeletalShadow;
+      Material m = CreateMaterial(col, tex);
+      m.progShadow = GetSkeletalShadowShader();
+      file.materials.push_back(m);
     }
   }
 
