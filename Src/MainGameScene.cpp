@@ -500,15 +500,26 @@ void MainGameScene::Render()
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
 
-    glm::vec3 position = camera.target - std::static_pointer_cast<DirectionalLightActor>(*lights.begin())->direction * 100.0f;
+    // ディレクショナル・ライトの向きから影用のビュー行列を作成.
+    glm::vec3 direction(0, -1, 0);
+    for (auto e : lights) {
+      if (auto p = std::dynamic_pointer_cast<DirectionalLightActor>(e)) {
+        direction = p->direction;
+        break;
+      }
+    }
+    const glm::vec3 position = camera.target - direction * 100.0f;
     const glm::mat4 matView = glm::lookAt(position, camera.target, glm::vec3(0, 1, 0));
-    const float aspectRatio =
-      static_cast<float>(window.Width()) / static_cast<float>(window.Height());
-    float w = 100;
-    float h = 100;
-    const glm::mat4 matProj = glm::ortho<float>(-w / 2, w / 2, -h / 2, h / 2, 10.0f, 500.0f);
-    meshBuffer.SetShadowViewProjectionMatrix(matProj * matView);
 
+    // 平行投影によるプロジェクション行列を作成.
+    const float width = 100; // 描画範囲の幅.
+    const float height = 100; // 描画範囲の高さ.
+    const float near = 10.0f; // 描画範囲の手前側の境界.
+    const float far = 200.0f; // 描画範囲の奥側の境界.
+    const glm::mat4 matProj = glm::ortho<float>(-width / 2, width / 2, -height / 2, height / 2, near, far);
+
+    // ビュー・プロジェクション行列を設定してメッシュを描画.
+    meshBuffer.SetShadowViewProjectionMatrix(matProj * matView);
     RenderMesh(Mesh::DrawType::shadow);
   }
 
@@ -665,11 +676,10 @@ void MainGameScene::Render()
 
 #if 0
   {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ZERO);
+    glDisable(GL_BLEND);
     Mesh::FilePtr simpleMesh = meshBuffer.GetFile("Simple");
     simpleMesh->materials[0].texture[0] = fboShadow->GetDepthTexture();
-    glm::mat4 m = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-0.75f, 0.5f, 0)), glm::vec3(0.25f, 0.25f * (1280.0f / 720.0f), 1));
+    glm::mat4 m = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-0.45f, 0, 0)), glm::vec3(0.5f, 0.89f, 1));
     Mesh::Draw(simpleMesh, m);
   }
 #endif
