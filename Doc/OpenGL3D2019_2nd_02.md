@@ -239,7 +239,7 @@ void main()
    Shader::ProgramPtr progStaticMesh;
 +  Shader::ProgramPtr progTerrain;
 
-   // スケルタル・アニメーションに対応したメッシュを保持するメンバ変数.
+   // スケルタル・アニメーションに対応したシェーダーを保持するメンバ変数.
    Shader::ProgramPtr progSkeletalMesh;
 ```
 
