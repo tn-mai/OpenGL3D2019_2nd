@@ -1,11 +1,8 @@
 /**
-* @file ShadowWithTexture.frag
+* @file NonTexturedShadow.frag
 */
 #version 430
 
-layout(location = 0) out float fragDepth;
-
 void main()
 {
-  fragDepth = gl_FragCoord.z;
 }
