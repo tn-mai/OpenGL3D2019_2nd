@@ -860,12 +860,13 @@ void main()
 +/**
 +* 描画するデータの種類.
 +*/
-+enum class  {
++enum class DrawType {
 +  color,  // 通常の描画.
 +  shadow, // 影の描画.
 +};
 -void Draw(const FilePtr&, const glm::mat4& matM);
-+void Draw(const FilePtr&, const glm::mat4& matM, DrawType drawType);
++void Draw(const FilePtr&, const glm::mat4& matM,
++  DrawType drawType = DrawType::color);
 
  } // namespace Mesh
 ```
