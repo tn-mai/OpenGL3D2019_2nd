@@ -622,6 +622,28 @@ Mesh.hを開き、Mesh::Bufferクラスの定義に次のプログラムを追�
 <img src="images/08_depth_shadow_mapping.jpg" style="width:60%; margin-left:auto; margin-right:auto"/>
 </div>
 
+### 2.7 シャドウ・アクネ
+
+影を描画すると、ところどころ斜線や点々が現れることがあります。これは「シャドウ・アクネ」と呼ばれています(アクネは「にきび」という意味です)。
+
+影用の深度バッファの1ピクセルのサイズが通常描画されるピクセルより大きい場合、あるピクセルでは影になり、別のピクセルでは日向になる、ということが発生します。これがシャドウ・アクネです。 つまり、シャドウ・アクネが発生する原因は、深度バッファの解像度不足なわけです。
+
+シャドウ・アクネは、深度バッファを大きくすれば解決します。そうはいっても、テクスチャサイズには限界があるうえ、深度バッファを大きくすればするほど描画にかかる時間が長くなってしまいます。
+
+そこで、別の解決方法を取ることにします。最も簡単なのは、「深度バイアス」と呼ばれる定数を追加することです。Terrain.vertを開き、次のプログラムを追加してください。
+
+```diff
+   outPosition = vec3(matModel * vec4(vPosition, 1.0));
+   outShadowPosition = vec3(matShadow * vec4(outPosition, 1.0)) * 0.5 + 0.5;
++  outShadowPosition.z -= 0.0005; // 深度バイアス.
+   outRawPosition = vPosition;
+   gl_Position = matMVP * (matModel * vec4(vPosition, 1.0));
+```
+
+深度バイアスは、対象ピクセルの座標をわずかに手前に移動させることで、シャドウ・アクネを回避します。
+
+プログラムが書けたらビルドして実行してください。シャドウ・アクネが軽減されていたら成功です。
+
 <div style="border:solid 1px; background:#f0e4cd; margin: 1rem; padding: 1rem; border-radius: 10px">
 <strong>［課題01］</strong><br>
 StaticMesh.vert, StaticMesh.fragに影を描画するプログラムを追加してください。
