@@ -862,7 +862,8 @@ Actor.cppを開き、次のようにヘッダファイルのインクルード�
 使用するライトのインデックスを設定する関数を定義します。StaticMeshActor::Draw関数の定義の下に、次のプログラムを追加してください。
 
 ```diff
-     Mesh::Draw(mesh, matModel);
+       Mesh::Draw(mesh, matModel);
+     }
    }
  }
 +

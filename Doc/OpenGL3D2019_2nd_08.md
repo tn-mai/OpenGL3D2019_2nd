@@ -1048,17 +1048,18 @@ Actorの派生クラスはもうひとつあります。SkeletalMeshActor.hを�
      const glm::mat4 matS = glm::scale(glm::mat4(1), scale);
      const glm::mat4 matModel = matT * matR_XZY * matS;
 
--    if (!mesh->materials.empty()) {
-+    if (drawType == Mesh::DrawType::color && !mesh->materials.empty()) {
-       const Shader::ProgramPtr p = mesh->materials[0].program;
-       if (p) {
-         p->Use();
-         p->SetPointLightIndex(pointLightCount, pointLightIndex);
-         p->SetSpotLightIndex(spotLightCount, spotLightIndex);
-       }
+     if (!mesh->materials.empty()) {
++      if (drawType == Mesh::DrawType::color) {
+         const Shader::ProgramPtr p = mesh->materials[0].program;
+         if (p) {
+           p->Use();
+           p->SetPointLightIndex(pointLightCount, pointLightIndex);
+           p->SetSpotLightIndex(spotLightCount, spotLightIndex);
+         }
++      }
+-      Mesh::Draw(mesh, matModel);
++      Mesh::Draw(mesh, matModel, drawType);
      }
--    Mesh::Draw(mesh, matModel);
-+    Mesh::Draw(mesh, matModel, drawType);
    }
  }
 ```
