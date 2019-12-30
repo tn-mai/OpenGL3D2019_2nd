@@ -959,6 +959,19 @@ Draw関数の定義も修正しましょう。Mesh.cppを開き、Draw関数を�
 -      m.progSkeletalMesh->Use();
 +      program->Use();
        for (int i = 0; i < sizeof(m.texture) / sizeof(m.texture[0]); ++i) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        if (m.texture[i]) {
+          glBindTexture(m.texture[i]->Target(), m.texture[i]->Get());
+        }
+        else {
+          glBindTexture(GL_TEXTURE_2D, 0);
+        }
+      }
+-     const GLint locMaterialColor = glGetUniformLocation(m.progSkeletalMesh->Get(), "materialColor");
++     const GLint locMaterialColor = glGetUniformLocation(program->Get(), "materialColor");
+      if (locMaterialColor >= 0) {
+        glUniform4fv(locMaterialColor, 1, &m.baseColor.x);
+      }
 ```
 
 ### 3.7 アクタークラスの描画関数関数の宣言に描画タイプを追加する
