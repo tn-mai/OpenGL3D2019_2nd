@@ -171,6 +171,7 @@
     <ClInclude Include="Src\MainGameScene.h" />
     <ClInclude Include="Src\Mesh.h" />
     <ClInclude Include="Src\FrameBufferObject.h" />
+    <ClInclude Include="Src\Particle.h" />
     <ClInclude Include="Src\PlayerActor.h" />
     <ClInclude Include="Src\Scene.h" />
     <ClInclude Include="Src\Shader.h" />
@@ -204,6 +205,7 @@
     <ClCompile Include="Src\MainGameScene.cpp" />
     <ClCompile Include="Src\Mesh.cpp" />
     <ClCompile Include="Src\FrameBufferObject.cpp" />
+    <ClCompile Include="Src\Particle.cpp" />
     <ClCompile Include="Src\PlayerActor.cpp" />
     <ClCompile Include="Src\Scene.cpp" />
     <ClCompile Include="Src\Shader.cpp" />
@@ -222,6 +224,7 @@
     <None Include="Res\DepthOfField.frag" />
     <None Include="Res\DepthOfField.vert" />
     <None Include="Res\GaussianBlur9.frag" />
+    <None Include="Res\Particle.vert" />
     <None Include="Res\Shadow.frag" />
     <None Include="Res\NonTexturedShadow.frag" />
     <None Include="Res\Simple.frag" />
@@ -235,6 +238,9 @@
     <None Include="Res\Terrain.frag" />
     <None Include="Res\Terrain.vert" />
     <None Include="Res\Water.frag" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Res\FireParticle.tga" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

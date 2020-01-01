@@ -156,6 +156,17 @@ bool MainGameScene::Initialize()
     return false;
   }
 
+  // パーティクル・システムを初期化する.
+  {
+    particleSystem.Init(1000);
+
+    // パーティクル・システムのテスト用にエミッターを追加.
+    glm::vec3 pos(97, 0, 100);
+    pos.y = heightMap.Height(pos);
+    ParticleEmitterPtr p = std::make_shared<ParticleEmitter>("Res/FireParticle.tga", pos, 5.0f, true, 20.0f);
+    particleSystem.Add(p);
+  }
+
   lightBuffer.Init(1);
   lightBuffer.BindToShader(meshBuffer.GetStaticMeshShader());
   lightBuffer.BindToShader(meshBuffer.GetTerrainShader());
@@ -163,9 +174,7 @@ bool MainGameScene::Initialize()
 
   glm::vec3 startPos(100, 0, 100);
   startPos.y = heightMap.Height(startPos);
-  glm::vec3 testPos(5, 0, 120);
-  testPos.y = heightMap.Height(testPos);
-  player = std::make_shared<PlayerActor>(&heightMap, meshBuffer, testPos);// startPos);
+  player = std::make_shared<PlayerActor>(&heightMap, meshBuffer, startPos);
 
   rand.seed(0);
 
@@ -414,6 +423,8 @@ void MainGameScene::Update(float deltaTime)
     p->SetSpotLightList(spotLightIndex);
   }
 
+  particleSystem.Update(deltaTime);
+
   // 敵を全滅させたら目的達成フラグをtrueにする.
   if (jizoId >= 0) {
     if (enemies.Empty()) {
@@ -559,6 +570,7 @@ void MainGameScene::Render()
   meshBuffer.BindShadowTexture(fboShadow->GetDepthTexture());
 
   RenderMesh(Mesh::DrawType::color);
+  particleSystem.Draw(matProj, matView);
 
   meshBuffer.UnbindShadowTexture();
 

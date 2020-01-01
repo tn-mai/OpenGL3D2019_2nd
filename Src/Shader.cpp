@@ -180,6 +180,7 @@ void Program::Reset(GLuint programId)
     locViewInfo = -1;
     locCameraInfo = -1;
     locBlurDirection = -1;
+    locMatInverseViewRotation = -1;
     return;
   }
 
@@ -195,6 +196,7 @@ void Program::Reset(GLuint programId)
   locViewInfo = glGetUniformLocation(id, "viewInfo");
   locCameraInfo = glGetUniformLocation(id, "cameraInfo");
   locBlurDirection = glGetUniformLocation(id, "blurDirection");
+  locMatInverseViewRotation = glGetUniformLocation(id, "matInverseViewRotation");
 
   if (GLenum error = glGetError()) {
     std::cout << "[ƒGƒ‰[]" << std::hex << error << "\n";
@@ -290,6 +292,18 @@ void Program::SetViewProjectionMatrix(const glm::mat4& matVP)
   this->matVP = matVP;
   if (locMatMVP >= 0) {
     glUniformMatrix4fv(locMatMVP, 1, GL_FALSE, &matVP[0][0]);
+  }
+}
+
+/**
+* •`‰æ‚ÉŽg‚í‚ê‚éƒrƒ…[‰ñ“]‚Ì‹ts—ñ‚ðÝ’è‚·‚é.
+*
+* @param matVP Ý’è‚·‚éƒrƒ…[‰ñ“]‚Ì‹ts—ñ.
+*/
+void Program::SetInverseViewRotationMatrix(const glm::mat3& matIVR)
+{
+  if (locMatInverseViewRotation >= 0) {
+    glUniformMatrix3fv(locMatInverseViewRotation, 1, GL_FALSE, &matIVR[0][0]);
   }
 }
 

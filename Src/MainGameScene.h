@@ -13,6 +13,7 @@
 #include "JizoActor.h"
 #include "Light.h"
 #include "FrameBufferObject.h"
+#include "Particle.h"
 #include <random>
 #include <vector>
 
@@ -87,6 +88,8 @@ private:
   FrameBufferObjectPtr fboBloom[6][2];
 
   FrameBufferObjectPtr fboShadow;
+
+  ParticleSystem particleSystem;
 };
 
 #endif // MAINGAMESCENE_H_INCLUDED
