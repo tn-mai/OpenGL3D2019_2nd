@@ -240,6 +240,7 @@
     <None Include="Res\Water.frag" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Res\CircleParticle.tga" />
     <Image Include="Res\FireParticle.tga" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -158,13 +158,19 @@ bool MainGameScene::Initialize()
 
   // パーティクル・システムを初期化する.
   {
-    particleSystem.Init(1000);
+    particleSystem.Init(10000);
 
     // パーティクル・システムのテスト用にエミッターを追加.
-    glm::vec3 pos(97, 0, 100);
-    pos.y = heightMap.Height(pos);
-    ParticleEmitterPtr p = std::make_shared<ParticleEmitter>("Res/FireParticle.tga", pos, 5.0f, true, 20.0f);
-    particleSystem.Add(p);
+    ParticleEmitterParameter ep;
+    ep.position = glm::vec3(97, 0, 100);
+    ep.position.y = heightMap.Height(ep.position);
+    ep.emissionsPerSecond = 20.0f;
+    ep.dstFactor = GL_ONE;
+    ep.imagePath = "Res/CircleParticle.tga";
+    ParticleParameter pp;
+    pp.scale = glm::vec2(0.5f);
+    pp.color = glm::vec4(0.9f, 0.3f, 0.1f, 1.0f);
+    particleSystem.Add(ep, pp);
   }
 
   lightBuffer.Init(1);
@@ -423,7 +429,8 @@ void MainGameScene::Update(float deltaTime)
     p->SetSpotLightList(spotLightIndex);
   }
 
-  particleSystem.Update(deltaTime);
+  const glm::mat4 matView = glm::lookAt(camera.position, camera.target, camera.up);
+  particleSystem.Update(deltaTime, matView);
 
   // 敵を全滅させたら目的達成フラグをtrueにする.
   if (jizoId >= 0) {

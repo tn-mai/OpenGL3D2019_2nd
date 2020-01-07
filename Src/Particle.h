@@ -19,14 +19,46 @@ using ParticleEmitterPtr = std::shared_ptr<ParticleEmitter>;
 class ParticleSystem;
 
 /**
-* 粒子.
+* パーティクルのパラメーター.
+*/
+struct ParticleParameter {
+  float lifetime = 1; // 生存期間.
+  glm::vec3 velocity = glm::vec3(0, 2, 0); // 速度.
+  glm::vec3 acceleration = glm::vec3(0); // 加速度.
+  glm::vec2 scale = glm::vec2(1); // 大きさ.
+  float rotation = 0; // 回転.
+  glm::vec4 color = glm::vec4(1); // 色と不透明度.
+};
+
+/**
+* パーティクル・エミッターのパラメーター.
+*/
+struct ParticleEmitterParameter {
+  int id = 0;
+  glm::vec3 position = glm::vec3(0);
+  glm::vec3 rotation = glm::vec3(0);
+  float duration = 1.0f; // パーティクルを放出する秒数.
+  bool loop = true; // duration経過後にループ再生するならtrue、停止するならfalse.
+  float emissionsPerSecond = 5.0f; // 秒あたりのパーティクル放出数.
+  float angle = glm::radians(15.0f); // 円錐の角度.
+  float radius = 0.5f; // 円錐の半径.
+  float gravity = 9.8f; // 重力.
+  std::string imagePath; // テクスチャ・ファイル名.
+
+  GLenum srcFactor = GL_SRC_ALPHA;
+  GLenum dstFactor = GL_ONE_MINUS_SRC_ALPHA;
+  glm::ivec2 tiles = glm::ivec2(1); // テクスチャの縦と横の分割数.
+};
+
+/**
+* パーティクル.
 */
 class Particle {
 public:
   friend ParticleSystem;
   friend ParticleEmitter;
 
-  Particle(const glm::vec3& pos, const glm::vec3& v, float lifetime) : position(pos), velocity(v), lifetime(lifetime) {};
+  Particle(const ParticleParameter& pp, const glm::vec3& pos, const Rect& r);
   virtual ~Particle() = default;
 
   void Update(float deltatime);
@@ -60,15 +92,14 @@ public:
   bool IsDead() const { return lifetime <= 0; }
 
 private:
-  glm::vec3 position = glm::vec3(0);
-  glm::vec3 velocity = glm::vec3(0);
-  glm::vec3 acceleration = glm::vec3(0);
-  float lifetime = 0;
-
-  glm::vec2 scale = glm::vec2(1);
-  float rotation = 0;
-  glm::vec4 color = glm::vec4(1);
   Rect rect = { glm::vec2(0), glm::vec2(0) };
+  glm::vec3 position = glm::vec3(0);
+  float lifetime = 1; // 生存期間.
+  glm::vec3 velocity = glm::vec3(0, 2, 0); // 速度.
+  glm::vec3 acceleration = glm::vec3(0); // 加速度.
+  glm::vec2 scale = glm::vec2(1); // 大きさ.
+  float rotation = 0; // 回転.
+  glm::vec4 color = glm::vec4(1); // 色と不透明度.
 };
 
 /**
@@ -79,48 +110,41 @@ class ParticleEmitter
 public:
   friend ParticleSystem;
 
-  ParticleEmitter(const char* imagePath, const glm::vec3& pos, float duration, bool loop, float eps);
+  ParticleEmitter(const ParticleEmitterParameter& ep, const ParticleParameter& pp);
   ~ParticleEmitter() = default;
 
   void Update(float deltatime);
   void Draw();
 
   // 座標の設定・取得
-  void Position(const glm::vec3& p) { position = p; }
-  const glm::vec3& Position() const { return position; }
+  void Position(const glm::vec3& p) { ep.position = p; }
+  const glm::vec3& Position() const { return ep.position; }
 
   // 回転の設定・取得
-  void Rotation(const glm::vec3& r) { rotation = r; }
-  const glm::vec3& Rotation() const { return rotation; }
+  void Rotation(const glm::vec3& r) { ep.rotation = r; }
+  const glm::vec3& Rotation() const { return ep.rotation; }
 
-  void Angle(float a) { angle = a; }
-  float Angle() const { return angle; }
+  void Angle(float a) { ep.angle = a; }
+  float Angle() const { return ep.angle; }
 
-  void Radius(float r) { radius = r; }
-  float Radius() const { return radius; }
+  void Radius(float r) { ep.radius = r; }
+  float Radius() const { return ep.radius; }
 
-  void Gravity(float g) { gravity = g; }
-  float Gravity() const { return gravity; }
+  void Gravity(float g) { ep.gravity = g; }
+  float Gravity() const { return ep.gravity; }
 
-  void Id(int n) { id = n; }
-  int Id() const { return id; }
+  void Id(int n) { ep.id = n; }
+  int Id() const { return ep.id; }
 
-  bool IsDead() const { return !loop && timer >= duration && particles.empty(); }
+  bool IsDead() const { return !ep.loop && timer >= ep.duration && particles.empty(); }
 
 private:
   void AddParticle();
 
-  int id = 0;
-  glm::vec3 position = glm::vec3(0);
-  glm::vec3 rotation = glm::vec3(0);
-  float duration = 1.0f; // パーティクルを放出する秒数.
-  bool loop = true; // duration経過後にループ再生するならtrue、停止するならfalse.
-  float emissionsPerSecond = 3.0f; // 秒あたりのパーティクル放出数.
-  float angle = 0.5f; // 円錐の角度.
-  float radius = 0.3f; // 円錐の半径.
-  float gravity = 9.8f; // 重力.
-  Texture::Image2DPtr texture; // パーティクル用テクスチャ.
+  ParticleEmitterParameter ep;
+  ParticleParameter pp;
 
+  Texture::Image2DPtr texture; // パーティクル用テクスチャ.
   float interval = 0;
   float timer = 0;
   float emissionTimer = 0;
@@ -141,9 +165,11 @@ public:
   ~ParticleSystem() = default;
 
   bool Init(size_t maxParticleCount);
-  void Add(const ParticleEmitterPtr& p);
+  void Add(const ParticleEmitterParameter& ep, const ParticleParameter& pp);
+  ParticleEmitterPtr Find(int id) const;
+  void Remove(const ParticleEmitterPtr&);
   void Clear();
-  void Update(float deltatime);
+  void Update(float deltatime, const glm::mat4& matView);
   void Draw(const glm::mat4& matProj, const glm::mat4& matView);
 
 private:

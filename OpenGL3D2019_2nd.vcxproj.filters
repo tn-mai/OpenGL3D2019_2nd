@@ -262,5 +262,8 @@
     <Image Include="Res\FireParticle.tga">
       <Filter>リソース ファイル</Filter>
     </Image>
+    <Image Include="Res\CircleParticle.tga">
+      <Filter>リソース ファイル</Filter>
+    </Image>
   </ItemGroup>
 </Project>

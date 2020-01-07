@@ -2,94 +2,145 @@
 * @file Particle.cpp
 */
 #include "Particle.h"
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <random>
 #include <iostream>
 #include <time.h>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace /* unnamed */ {
 
+/// パーティクル用の頂点データ型.
 struct Vertex {
-  glm::vec3 position; ///< 座標
+  glm::vec3 center; ///< 中心の座標
   glm::vec4 color; ///< 色
   glm::vec2 texCoord; ///< テクスチャ座標
-  glm::vec2 offset;
+  glm::vec2 offset; ///< 中心からの距離.
 };
 
-std::mt19937& Rand()
+/// パーティクル用の乱数エンジン.
+std::mt19937 randomEngine(static_cast<int>(time(nullptr)));
+
+/**
+* int型の乱数を生成する.
+*
+* @param min 生成する乱数の最小値.
+* @param max 生成する乱数の最大値.
+*/
+int RandomInt(int min, int max)
 {
-  static std::mt19937 instance(static_cast<int>(time(nullptr)));
-  return instance;
+  return std::uniform_int_distribution<>(min, max)(randomEngine);
+}
+ 
+/**
+* float型の乱数を生成する.
+*
+* @param min 生成する乱数の最小値.
+* @param max 生成する乱数の最大値.
+*/
+float RandomFloat(float min, float max)
+{
+  return std::uniform_real_distribution<float>(min, max)(randomEngine);
 }
  
 } // unnamed namespace
 
 /**
+* コンストラクタ.
 *
+* @param  pp  パーティクルのパラメーター.
+* @param  pos パーティクルの初期座標.
+* @param  r   パーティクルのテクスチャ表示範囲を示す矩形.
+*/
+Particle::Particle(const ParticleParameter& pp, const glm::vec3& pos, const Rect& r) :
+  rect(r),
+  position(pos),
+  lifetime(pp.lifetime),
+  velocity(pp.velocity),
+  acceleration(pp.acceleration),
+  scale(pp.scale),
+  rotation(pp.rotation),
+  color(pp.color)
+{
+}
+
+/**
+* パーティクルの状態を更新する.
+*
+* @param deltaTime  前回の更新からの経過時間(秒).
 */
 void Particle::Update(float deltaTime)
 {
   lifetime -= deltaTime;
   velocity += acceleration * deltaTime;
   position += velocity * deltaTime;
-  color.a = lifetime / 2.0;
 }
 
 /**
+* コンストラクタ.
 *
+* @param  ep エミッターの初期化パラメータ.
+* @param  pp パーティクルの初期化パラメータ.
 */
-ParticleEmitter::ParticleEmitter(const char* imagePath, const glm::vec3& pos, float duration, bool loop, float eps) :
-  duration(duration),
-  loop(loop),
-  emissionsPerSecond(eps),
-  position(pos),
-  interval(1.0f / eps)
+ParticleEmitter::ParticleEmitter(const ParticleEmitterParameter& ep, const ParticleParameter& pp) :
+  ep(ep),
+  pp(pp),
+  interval(1.0f / ep.emissionsPerSecond)
 {
-  texture = Texture::Image2D::Create(imagePath);
+  texture = Texture::Image2D::Create(ep.imagePath.c_str());
 }
 
 /**
-*
+* パーティクルを追加する.
 */
 void ParticleEmitter::AddParticle()
 {
-  const float rx = std::uniform_real_distribution<float>(-angle, angle)(Rand());
-  const float ry = std::uniform_real_distribution<float>(0.0f, glm::two_pi<float>())(Rand());
+  const float rx = RandomFloat(-ep.angle, ep.angle);
+  const float ry = RandomFloat(0.0f, glm::two_pi<float>());
   const glm::mat4 mvel = glm::rotate(glm::rotate(glm::mat4(1),
     ry, glm::vec3(0, 1, 0)),
     rx, glm::vec3(1, 0, 0));
-  const float velocity = std::uniform_real_distribution<float>(5, 6.0f)(Rand());
 
   const glm::mat4 moff = glm::rotate(glm::rotate(glm::rotate(glm::mat4(1),
-    rotation.y, glm::vec3(0, 1, 0)),
-    rotation.z, glm::vec3(0, 0, 1)),
-    rotation.x, glm::vec3(1, 0, 0));
-  const float offsetX = std::uniform_real_distribution<float>(-radius, radius)(Rand());
-  const glm::vec3 offset = moff * glm::vec4(offsetX, 0, 0, 1);
+    ep.rotation.y, glm::vec3(0, 1, 0)),
+    ep.rotation.z, glm::vec3(0, 0, 1)),
+    ep.rotation.x, glm::vec3(1, 0, 0));
+  const glm::vec3 offset = moff * mvel * glm::vec4(0, ep.radius, 0, 1);
 
-  Particle p(position + offset, moff * mvel * glm::vec4(0, velocity, 0, 1), 2.0f);
-  p.rect.origin = { 0, 64 };
-  p.rect.size = { 64, 64 };
-  const float size = std::normal_distribution<float>(0, 1)(Rand()) * 0.0005f + 0.0045f;
-  p.scale = glm::vec2(size);
-  p.acceleration = glm::vec3(0, -gravity, 0);
+  ParticleParameter tmpPP = pp;
+  tmpPP.velocity = moff * mvel * glm::vec4(pp.velocity, 1);
+
+  Rect rect;
+  rect.origin = glm::vec2(0);
+  if (ep.tiles.x > 1) {
+    const int tx = RandomInt(0, ep.tiles.x - 1);
+    rect.origin.x = static_cast<float>(tx) / static_cast<float>(ep.tiles.x);
+  }
+  if (ep.tiles.y > 1) {
+    const int ty = RandomInt(0, ep.tiles.y - 1);
+    rect.origin.y = static_cast<float>(ty) / static_cast<float>(ep.tiles.y);
+  }
+  rect.size = glm::vec2(1) / glm::vec2(ep.tiles);
+
+  Particle p(tmpPP, ep.position + offset, rect);
   particles.push_back(p);
 }
 
 /**
+* エミッターの管理下にあるパーティクルの状態を更新する.
 *
+* @param deltaTime  前回の更新からの経過時間(秒).
 */
 void ParticleEmitter::Update(float deltaTime)
 {
   float emissionDelta = deltaTime;
   timer += deltaTime;
-  if (timer >= duration) {
-    if (loop) {
-      timer -= duration;
+  if (timer >= ep.duration) {
+    if (ep.loop) {
+      timer -= ep.duration;
     } else {
-      emissionDelta -= timer - duration;
-      timer = duration;
+      emissionDelta -= timer - ep.duration;
+      timer = ep.duration;
     }
   }
   emissionTimer += emissionDelta;
@@ -104,11 +155,12 @@ void ParticleEmitter::Update(float deltaTime)
 }
 
 /**
-*
+* エミッターの管理下にあるパーティクルを描画する.
 */
 void ParticleEmitter::Draw()
 {
   if (count) {
+    glBlendFunc(ep.srcFactor, ep.dstFactor);
     glBindTexture(GL_TEXTURE_2D, texture->Get());
     glDrawElementsBaseVertex(GL_TRIANGLES, count, GL_UNSIGNED_SHORT,
       reinterpret_cast<const GLvoid*>(0), baseVertex);
@@ -116,7 +168,9 @@ void ParticleEmitter::Draw()
 }
 
 /**
+* パーティクル・システムを初期化する.
 *
+* @param maxParticleCount 表示可能なパーティクルの最大数.
 */
 bool ParticleSystem::Init(size_t maxParticleCount)
 {
@@ -137,7 +191,7 @@ bool ParticleSystem::Init(size_t maxParticleCount)
   vao.Create(vbo.Id(), ibo.Id());
   vao.Bind();
   vao.VertexAttribPointer(
-    0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, position));
+    0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, center));
   vao.VertexAttribPointer(
     1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, color));
   vao.VertexAttribPointer(
@@ -152,15 +206,43 @@ bool ParticleSystem::Init(size_t maxParticleCount)
 }
 
 /**
+* エミッターを追加する.
 *
+* @param  ep  エミッターの初期化パラメータ.
+* @param  pp  パーティクルの初期化パラメータ.
 */
-void ParticleSystem::Add(const ParticleEmitterPtr& p)
+void ParticleSystem::Add(const ParticleEmitterParameter& ep, const ParticleParameter& pp)
 {
+  ParticleEmitterPtr p = std::make_shared<ParticleEmitter>(ep, pp);
   emitters.push_back(p);
 }
 
 /**
+* 指定されたIDを持つエミッターを検索する.
 *
+* @param id  検索するID.
+*
+* @return 引数idと一致するIDを持つエミッター.
+*/
+ParticleEmitterPtr ParticleSystem::Find(int id) const
+{
+  auto itr = std::find_if(emitters.begin(), emitters.end(), [id](const ParticleEmitterPtr& p) { return p->Id() == id; });
+  if (itr != emitters.end()) {
+    return *itr;
+  }
+  return nullptr;
+}
+
+/**
+* 指定されたエミッターを削除する.
+*/
+void ParticleSystem::Remove(const ParticleEmitterPtr& p)
+{
+  emitters.remove(p);
+}
+
+/**
+* すべてのエミッターを削除する.
 */
 void ParticleSystem::Clear()
 {
@@ -168,28 +250,40 @@ void ParticleSystem::Clear()
 }
 
 /**
+* パーティクルの状態を更新する.
 *
+* @param deltaTime  前回の更新からの経過時間(秒).
+* @param matView    ビュー行列.
 */
-void ParticleSystem::Update(float deltaTime)
+void ParticleSystem::Update(float deltaTime, const glm::mat4& matView)
 {
   for (auto& e : emitters) {
     e->Update(deltaTime);
   }
   emitters.remove_if([](const ParticleEmitterPtr& e) { return e->IsDead(); });
+  struct A {
+    float z;
+    ParticleEmitterPtr p;
+  };
+  std::vector<A> sortedList;
+  sortedList.reserve(emitters.size());
+  for (auto& e : emitters) {
+    const glm::vec3 pos = matView * glm::vec4(e->Position(), 1);
+    sortedList.push_back({ pos.z, e });
+  }
+  std::sort(sortedList.begin(), sortedList.end(), [](const A& a, const A& b) { return a.z < b.z; });
 
   std::vector<Vertex> vertices;
-  vertices.reserve(1000);
-  for (auto& e : emitters) {
+  vertices.reserve(10000);
+  for (auto& e : sortedList) {
     const glm::vec2 reciprocalSize(
-      glm::vec2(1) / glm::vec2(e->texture->Width(), e->texture->Height()));
+      glm::vec2(1) / glm::vec2(e.p->texture->Width(), e.p->texture->Height()));
 
-    e->baseVertex = vertices.size();
-    e->count = 0;
-    for (auto& particle : e->particles) {
+    e.p->baseVertex = vertices.size();
+    e.p->count = 0;
+    for (auto& particle : e.p->particles) {
       // 矩形を0.0～1.0の範囲に変換.
       Rect rect = particle.rect;
-      rect.origin *= reciprocalSize;
-      rect.size *= reciprocalSize;
 
       // 中心からの大きさを計算.
       const glm::vec2 halfSize = particle.rect.size * 0.5f;
@@ -203,36 +297,39 @@ void ParticleSystem::Update(float deltaTime)
 
       Vertex v[4];
 
-      v[0].position = particle.position;
+      v[0].center = particle.position;
       v[0].color = particle.color;
       v[0].texCoord = rect.origin;
-      v[0].offset = transform * glm::vec4(-halfSize.x, -halfSize.y, 0, 1);
+      v[0].offset = transform * glm::vec4(-1, -1, 0, 1);
 
-      v[1].position = particle.position;
+      v[1].center = particle.position;
       v[1].color = particle.color;
       v[1].texCoord = glm::vec2(rect.origin.x + rect.size.x, rect.origin.y);
-      v[1].offset = transform * glm::vec4(halfSize.x, -halfSize.y, 0, 1);
+      v[1].offset = transform * glm::vec4(1, -1, 0, 1);
 
-      v[2].position = particle.position;
+      v[2].center = particle.position;
       v[2].color = particle.color;
       v[2].texCoord = rect.origin + rect.size;
-      v[2].offset = transform * glm::vec4(halfSize.x, halfSize.y, 0, 1);
+      v[2].offset = transform * glm::vec4(1, 1, 0, 1);
 
-      v[3].position = particle.position;
+      v[3].center = particle.position;
       v[3].color = particle.color;
       v[3].texCoord = glm::vec2(rect.origin.x, rect.origin.y + rect.size.y);
-      v[3].offset = transform * glm::vec4(-halfSize.x, halfSize.y, 0, 1);
+      v[3].offset = transform * glm::vec4(-1, 1, 0, 1);
 
       vertices.insert(vertices.end(), v, v + 4);
 
-      e->count += 6;
+      e.p->count += 6;
     }
   }
   vbo.BufferSubData(0, vertices.size() * sizeof(Vertex), vertices.data());
 }
 
 /**
+* パーティクルを描画する.
 *
+* @param  matProj 描画に使用するプロジェクション行列.
+* @param  matView 描画に使用するビュー行列.
 */
 void ParticleSystem::Draw(const glm::mat4& matProj, const glm::mat4& matView)
 {
