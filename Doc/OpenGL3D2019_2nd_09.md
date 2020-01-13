@@ -329,7 +329,8 @@ class ParticleSystem;
 +  ~ParticleSystem() = default;
 +
 +  bool Init(size_t maxParticleCount);
-+  void Add(const ParticleEmitterParameter& ep, const ParticleParameter& pp);
++  ParticleEmitterPtr Add(
++    const ParticleEmitterParameter& ep, const ParticleParameter& pp);
 +  ParticleEmitterPtr Find(int id) const;
 +  void Remove(const ParticleEmitterPtr&);
 +  void Clear();
@@ -600,7 +601,7 @@ intervalの計算は更新関数で行ってもいいのですが、コンピュ
 上記のプログラムにおいて、`rx`は半径方向の位置を表し、`ry`はそれを回転させる角度を表します。`rx`の計算式は`√(0～1の乱数)`になっていますが、これには理由があります。パーティクルは、円盤のどの位置からも均等な確率で放出されるべきです。これは、以下の図から分かるように、円盤の外側に行くほど多くのパーティクルが放出されることを意味します。詳細ははぶきますが、この確率の変化は平方根によって表すことができるのです。
 
 <div style="text-align: center;width: 100%;">
-<img src="images/09_pVRoc.png" style="width:40%; margin-left:auto; margin-right:auto"/>
+<img src="images/09_pVRoc.png" style="width:30%; margin-left:auto; margin-right:auto"/>
 <div style="white-space: pre;">[外側の円の長さは内側の円の2倍→パーティクルの放出確率が2倍]</div>
 </div>
 
@@ -662,8 +663,6 @@ intervalの計算は更新関数で行ってもいいのですが、コンピュ
 次は、パーティクルを描画する関数を定義します。ParticleEmitter::Update関数の定義の下に、次のプログラムを追加してください。
 
 ```diff
-     e.Update(deltaTime);
-   }
    particles.remove_if([](const Particle& p) { return p.IsDead(); });
  }
 +
@@ -777,14 +776,19 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
 +*
 +* @param  ep  エミッターの初期化パラメータ.
 +* @param  pp  パーティクルの初期化パラメータ.
++*
++* @return 追加したエミッター.
 +*/
-+void ParticleSystem::Add(
++ParticleEmitterPtr ParticleSystem::Add(
 +  const ParticleEmitterParameter& ep, const ParticleParameter& pp)
 +{
 +  ParticleEmitterPtr p = std::make_shared<ParticleEmitter>(ep, pp);
 +  emitters.push_back(p);
++  return p;
 +}
 ```
+
+この関数は作成したエミッターへのポインタを返します。例えば、この戻り値をアクターに保存して、Update関数などでアクターの座標をエミッターの座標にコピーすれば、アクターに追随するエミッターが作れるでしょう。
 
 ### 2.21 ParticleSystem::Find関数を定義する
 
@@ -1120,7 +1124,6 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
 
    FrameBufferObjectPtr fboMain;
    FrameBufferObjectPtr fboDepthOfField;
-   FrameBufferObjectPtr fboBloom[6][2];
 ```
 
 ### 3.3 パーティクル・システムを初期化する
@@ -1157,7 +1160,7 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
 +    ep.position = glm::vec3(96.5f, 0, 95);
 +    ep.position.y = heightMap.Height(ep.position);
 +    ep.emissionsPerSecond = 20.0f;
-+    ep.dstFactor = GL_ONE;
++    ep.dstFactor = GL_ONE; // 加算合成.
 +    ep.gravity = 0;
 +    ParticleParameter pp;
 +    pp.scale = glm::vec2(0.5f);
@@ -1214,13 +1217,12 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
    meshBuffer.UnbindShadowTexture();
 
    // 被写界深度.
-   {
 ```
 
 プログラムが書けたら、ビルドして実行してください。パーティクルが表示されたら成功です。
 
 <div style="text-align: center;width: 100%;">
-<img src="images/09_result.jpg" style="width:80%; margin-left:auto; margin-right:auto"/>
+<img src="images/09_result.jpg" style="width:70%; margin-left:auto; margin-right:auto"/>
 <div style="white-space: pre;">[パーティクルを表示したところ]</div>
 </div>
 
@@ -1242,14 +1244,26 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
 +    ep.tiles = glm::ivec2(2, 2);
      ep.position = glm::vec3(96.5f, 0, 95);
      ep.position.y = heightMap.Height(ep.position);
-     ep.emissionsPerSecond = 20.0f;
 ```
 
-tiles(たいるず)メンバ変数は、テクスチャが縦横いくつの画像を含んでいるかを指定します。FireParticle.tgaは2x2の画像を含んでいるので、縦2個、横2個の値を設定しているわけです。
-
-プログラムが書けたらビルドして実行してください。円盤テクススチャのときより炎らしい映像になっていたら成功です。
+tiles(たいるず)メンバ変数は、テクスチャが縦横いくつの画像を含んでいるかを指定します。FireParticle.tgaは2x2の画像を含んでいるので、縦2個、横2個の値を設定しているわけです。プログラムが書けたらビルドして実行してください。円盤テクススチャのときより炎らしい映像になっていたら成功です。
 
 <div style="text-align: center;width: 100%;">
-<img src="images/09_result2.jpg" style="width:80%; margin-left:auto; margin-right:auto"/>
+<img src="images/09_result2.jpg" style="width:70%; margin-left:auto; margin-right:auto"/>
 <div style="white-space: pre;">[前よりは炎っぽい？]</div>
+</div>
+
+<div style="border:solid 1px; background:#f0e4cd; margin: 1rem; padding: 1rem; border-radius: 10px">
+<strong>［課題01］</strong><br>
+既存のエミッターとは異なるパラメーターを使って、新しいエミッター追加してください。
+</div>
+
+<div style="border:solid 1px; background:#f0e4cd; margin: 1rem; padding: 1rem; border-radius: 10px">
+<strong>［課題02］</strong><br>
+敵に攻撃が当たったとき、敵の胸の高さにループしないエミッターを追加してください。ループ以外のパラメーターは自由に設定してください。
+</div>
+
+<div style="border:solid 1px; background:#f0e4cd; margin: 1rem; padding: 1rem; border-radius: 10px">
+<strong>［課題03］</strong><br>
+パーティクルのパラメーターに「終了時の色」を追加し、lifetimeが0になったときその色になるように、パーティクルの色を徐々に変化させる機能を追加してください。
 </div>
