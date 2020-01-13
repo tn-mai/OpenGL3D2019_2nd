@@ -157,19 +157,33 @@ bool MainGameScene::Initialize()
   }
 
   // パーティクル・システムを初期化する.
+  particleSystem.Init(10000);
   {
-    particleSystem.Init(10000);
-
     // パーティクル・システムのテスト用にエミッターを追加.
     ParticleEmitterParameter ep;
-    ep.position = glm::vec3(97, 0, 100);
+    ep.imagePath = "Res/FireParticle.tga";
+    ep.position = glm::vec3(97, 0, 98);
     ep.position.y = heightMap.Height(ep.position);
     ep.emissionsPerSecond = 20.0f;
     ep.dstFactor = GL_ONE;
-    ep.imagePath = "Res/CircleParticle.tga";
+    ep.gravity = 0;
+    ep.tiles = glm::ivec2(2, 2);
     ParticleParameter pp;
     pp.scale = glm::vec2(0.5f);
-    pp.color = glm::vec4(0.9f, 0.3f, 0.1f, 1.0f);
+    pp.color = glm::vec4(0.8f, 0.3f, 0.1f, 1.0f);
+    particleSystem.Add(ep, pp);
+  }
+  {
+    ParticleEmitterParameter ep;
+    ep.imagePath = "Res/CircleParticle.tga";
+    ep.position = glm::vec3(97, 0, 100);
+    ep.position.y = heightMap.Height(ep.position);
+    ep.angle = glm::radians(30.0f);
+    ParticleParameter pp;
+    pp.lifetime = 2;
+    pp.scale = glm::vec2(0.2f);
+    pp.velocity = glm::vec3(0, 3, 0);
+    pp.color = glm::vec4(0.1f, 0.3f, 0.8f, 1.0f);
     particleSystem.Add(ep, pp);
   }
 
@@ -430,7 +444,7 @@ void MainGameScene::Update(float deltaTime)
   }
 
   const glm::mat4 matView = glm::lookAt(camera.position, camera.target, camera.up);
-  particleSystem.Update(deltaTime, matView);
+  particleSystem.Update(deltaTime);
 
   // 敵を全滅させたら目的達成フラグをtrueにする.
   if (jizoId >= 0) {

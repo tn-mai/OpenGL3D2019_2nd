@@ -83,13 +83,13 @@ private:
   LightBuffer lightBuffer;
   ActorList lights;
 
+  ParticleSystem particleSystem;
+
   FrameBufferObjectPtr fboMain;
   FrameBufferObjectPtr fboDepthOfField;
   FrameBufferObjectPtr fboBloom[6][2];
 
   FrameBufferObjectPtr fboShadow;
-
-  ParticleSystem particleSystem;
 };
 
 #endif // MAINGAMESCENE_H_INCLUDED

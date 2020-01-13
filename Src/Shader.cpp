@@ -298,11 +298,12 @@ void Program::SetViewProjectionMatrix(const glm::mat4& matVP)
 /**
 * •`‰æ‚ÉŽg‚í‚ê‚éƒrƒ…[‰ñ“]‚Ì‹ts—ñ‚ðÝ’è‚·‚é.
 *
-* @param matVP Ý’è‚·‚éƒrƒ…[‰ñ“]‚Ì‹ts—ñ.
+* @param matView Œ³‚É‚È‚éƒrƒ…[s—ñ.
 */
-void Program::SetInverseViewRotationMatrix(const glm::mat3& matIVR)
+void Program::SetInverseViewRotationMatrix(const glm::mat4& matView)
 {
   if (locMatInverseViewRotation >= 0) {
+    const glm::mat3 matIVR = glm::inverse(glm::mat3(glm::transpose(glm::inverse(matView))));
     glUniformMatrix3fv(locMatInverseViewRotation, 1, GL_FALSE, &matIVR[0][0]);
   }
 }

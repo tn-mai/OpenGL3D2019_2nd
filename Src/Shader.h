@@ -32,6 +32,7 @@ public:
   void Use();
   void BindTexture(GLuint, GLuint);
   void SetViewProjectionMatrix(const glm::mat4&);
+  void SetInverseViewRotationMatrix(const glm::mat4& matView);
   void SetShadowViewProjectionMatrix(const glm::mat4&);
   void SetModelMatrix(const glm::mat4&);
   void SetPointLightIndex(int count, const int* indexList);
@@ -41,7 +42,6 @@ public:
   void SetViewInfo(float w, float h, float near, float far);
   void SetCameraInfo(float focalPlane, float focalLength, float aperture, float sensorSize);
   void SetBlurDirection(float x, float y);
-  void SetInverseViewRotationMatrix(const glm::mat3& matIVR);
 
   /// ƒvƒƒOƒ‰ƒ€ID‚ğæ“¾‚·‚é.
   GLuint Get() const { return id; }

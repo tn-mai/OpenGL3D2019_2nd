@@ -3,8 +3,10 @@
 */
 #include "Particle.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
 #include <algorithm>
 #include <random>
+#include <numeric>
 #include <iostream>
 #include <time.h>
 
@@ -31,7 +33,7 @@ int RandomInt(int min, int max)
 {
   return std::uniform_int_distribution<>(min, max)(randomEngine);
 }
- 
+
 /**
 * float型の乱数を生成する.
 *
@@ -42,7 +44,7 @@ float RandomFloat(float min, float max)
 {
   return std::uniform_real_distribution<float>(min, max)(randomEngine);
 }
- 
+
 } // unnamed namespace
 
 /**
@@ -95,20 +97,22 @@ ParticleEmitter::ParticleEmitter(const ParticleEmitterParameter& ep, const Parti
 */
 void ParticleEmitter::AddParticle()
 {
-  const float rx = RandomFloat(-ep.angle, ep.angle);
+  const float rx = std::sqrt(RandomFloat(0, 1));
   const float ry = RandomFloat(0.0f, glm::two_pi<float>());
-  const glm::mat4 mvel = glm::rotate(glm::rotate(glm::mat4(1),
-    ry, glm::vec3(0, 1, 0)),
-    rx, glm::vec3(1, 0, 0));
+  const glm::mat4 matRY = glm::rotate(glm::mat4(1), ry, glm::vec3(0, 1, 0));
+  const glm::vec4 pos = matRY * glm::vec4(rx * ep.radius, 0, 0, 1);
 
-  const glm::mat4 moff = glm::rotate(glm::rotate(glm::rotate(glm::mat4(1),
+  const glm::mat4 matVel = glm::rotate(matRY, rx * ep.angle, glm::vec3(0, 0, -1));
+
+  // X -> Z -> Yの順で回転を適用.
+  const glm::mat4 matRot = glm::rotate(glm::rotate(glm::rotate(glm::mat4(1),
     ep.rotation.y, glm::vec3(0, 1, 0)),
-    ep.rotation.z, glm::vec3(0, 0, 1)),
+    ep.rotation.z, glm::vec3(0, 0, -1)),
     ep.rotation.x, glm::vec3(1, 0, 0));
-  const glm::vec3 offset = moff * mvel * glm::vec4(0, ep.radius, 0, 1);
+  const glm::vec3 offset = matRot * pos;
 
   ParticleParameter tmpPP = pp;
-  tmpPP.velocity = moff * mvel * glm::vec4(pp.velocity, 1);
+  tmpPP.velocity = matRot * matVel * glm::vec4(pp.velocity, 1);
 
   Rect rect;
   rect.origin = glm::vec2(0);
@@ -133,22 +137,21 @@ void ParticleEmitter::AddParticle()
 */
 void ParticleEmitter::Update(float deltaTime)
 {
-  float emissionDelta = deltaTime;
   timer += deltaTime;
   if (timer >= ep.duration) {
     if (ep.loop) {
       timer -= ep.duration;
+      emissionTimer -= ep.duration;
     } else {
-      emissionDelta -= timer - ep.duration;
       timer = ep.duration;
     }
   }
-  emissionTimer += emissionDelta;
-  for (; emissionTimer >= interval; emissionTimer -= interval) {
+  for (; timer - emissionTimer >= interval; emissionTimer += interval) {
     AddParticle();
   }
 
   for (auto& e : particles) {
+    e.acceleration.y -= ep.gravity * deltaTime;
     e.Update(deltaTime);
   }
   particles.remove_if([](const Particle& p) { return p.IsDead(); });
@@ -174,21 +177,30 @@ void ParticleEmitter::Draw()
 */
 bool ParticleSystem::Init(size_t maxParticleCount)
 {
-  vbo.Create(GL_ARRAY_BUFFER, sizeof(Vertex) * maxParticleCount * 4,
-    nullptr, GL_STREAM_DRAW);
+  if (!vbo.Create(GL_ARRAY_BUFFER, sizeof(Vertex) * maxParticleCount * 4,
+    nullptr, GL_STREAM_DRAW)) {
+    std::cerr << "[エラー] パーティクル・システムの初期化に失敗.\n";
+    return false;
+  }
 
   static const GLushort baseIndices[] = { 0, 1, 2, 2, 3, 0 };
   std::vector<short> indices;
   indices.reserve(4000);
-  for (int baseIndex = 0; baseIndex < 65536 - 4; baseIndex += 4) {
+  for (int baseIndex = 0; baseIndex <= std::numeric_limits<GLushort>::max() - 3; baseIndex += 4) {
     for (auto i : baseIndices) {
-      indices.push_back(static_cast<GLshort>(baseIndex + i));
+      indices.push_back(static_cast<GLushort>(baseIndex + i));
     }
   }
-  ibo.Create(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * indices.size(),
-    indices.data(), GL_STATIC_DRAW);
+  if (!ibo.Create(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * indices.size(),
+    indices.data(), GL_STATIC_DRAW)) {
+    std::cerr << "[エラー] パーティクル・システムの初期化に失敗.\n";
+    return false;
+  }
 
-  vao.Create(vbo.Id(), ibo.Id());
+  if (!vao.Create(vbo.Id(), ibo.Id())) {
+    std::cerr << "[エラー] パーティクル・システムの初期化に失敗.\n";
+    return false;
+  }
   vao.Bind();
   vao.VertexAttribPointer(
     0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, center));
@@ -199,8 +211,17 @@ bool ParticleSystem::Init(size_t maxParticleCount)
   vao.VertexAttribPointer(
     3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, offset));
   vao.Unbind();
+  const GLenum error = glGetError();
+  if (error != GL_NO_ERROR) {
+    std::cerr << "[エラー] パーティクル・システムの初期化に失敗(" << std::hex << error << ").\n";
+    return false;
+  }
 
   program = Shader::Program::Create("Res/Particle.vert", "Res/Sprite.frag");
+  if (!program) {
+    std::cerr << "[エラー] パーティクル・システムの初期化に失敗.\n";
+    return false;
+  }
 
   return true;
 }
@@ -253,47 +274,27 @@ void ParticleSystem::Clear()
 * パーティクルの状態を更新する.
 *
 * @param deltaTime  前回の更新からの経過時間(秒).
-* @param matView    ビュー行列.
 */
-void ParticleSystem::Update(float deltaTime, const glm::mat4& matView)
+void ParticleSystem::Update(float deltaTime)
 {
   for (auto& e : emitters) {
     e->Update(deltaTime);
   }
   emitters.remove_if([](const ParticleEmitterPtr& e) { return e->IsDead(); });
-  struct A {
-    float z;
-    ParticleEmitterPtr p;
-  };
-  std::vector<A> sortedList;
-  sortedList.reserve(emitters.size());
-  for (auto& e : emitters) {
-    const glm::vec3 pos = matView * glm::vec4(e->Position(), 1);
-    sortedList.push_back({ pos.z, e });
-  }
-  std::sort(sortedList.begin(), sortedList.end(), [](const A& a, const A& b) { return a.z < b.z; });
 
   std::vector<Vertex> vertices;
   vertices.reserve(10000);
-  for (auto& e : sortedList) {
-    const glm::vec2 reciprocalSize(
-      glm::vec2(1) / glm::vec2(e.p->texture->Width(), e.p->texture->Height()));
-
-    e.p->baseVertex = vertices.size();
-    e.p->count = 0;
-    for (auto& particle : e.p->particles) {
-      // 矩形を0.0～1.0の範囲に変換.
-      Rect rect = particle.rect;
-
-      // 中心からの大きさを計算.
-      const glm::vec2 halfSize = particle.rect.size * 0.5f;
-
+  for (auto& e : emitters) {
+    e->baseVertex = vertices.size();
+    e->count = 0;
+    for (auto& particle : e->particles) {
       // 座標変換行列を作成.
-      const glm::mat4 matT = glm::translate(glm::mat4(1), particle.position);
       const glm::mat4 matR =
         glm::rotate(glm::mat4(1), particle.rotation, glm::vec3(0, 0, 1));
       const glm::mat4 matS = glm::scale(glm::mat4(1), glm::vec3(particle.scale, 1));
       const glm::mat4 transform = matR * matS;
+
+      const Rect& rect = particle.rect; // 読みやすくするための参照を定義.
 
       Vertex v[4];
 
@@ -319,7 +320,7 @@ void ParticleSystem::Update(float deltaTime, const glm::mat4& matView)
 
       vertices.insert(vertices.end(), v, v + 4);
 
-      e.p->count += 6;
+      e->count += 6;
     }
   }
   vbo.BufferSubData(0, vertices.size() * sizeof(Vertex), vertices.data());
@@ -341,16 +342,27 @@ void ParticleSystem::Draw(const glm::mat4& matProj, const glm::mat4& matView)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   program->Use();
-  const glm::mat4 matInverseRotation = glm::mat4(glm::inverse(glm::mat3(glm::transpose(glm::inverse(matView)))));
-  program->SetInverseViewRotationMatrix(matInverseRotation);
+  program->SetInverseViewRotationMatrix(matView);
   program->SetViewProjectionMatrix(matProj * matView);
   glActiveTexture(GL_TEXTURE0);
 
+  struct A {
+    float z;
+    ParticleEmitterPtr p;
+  };
+  std::vector<A> sortedList;
+  sortedList.reserve(emitters.size());
   for (auto& e : emitters) {
-    e->Draw();
+    const glm::vec3 pos = matView * glm::vec4(e->Position(), 1);
+    sortedList.push_back({ pos.z, e });
+  }
+  std::sort(sortedList.begin(), sortedList.end(), [](const A& a, const A& b) { return a.z < b.z; });
+  for (auto& e : sortedList) {
+    e.p->Draw();
   }
 
   glBindTexture(GL_TEXTURE_2D, 0);
+  glUseProgram(0);
   vao.Unbind();
   glDepthMask(true);
 

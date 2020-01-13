@@ -9,7 +9,6 @@
 #include "Shader.h"
 #include "Sprite.h"
 #include <glm/glm.hpp>
-#include <vector>
 #include <list>
 #include <memory>
 
@@ -62,7 +61,7 @@ public:
   virtual ~Particle() = default;
 
   void Update(float deltatime);
-
+#if 0
   // 座標の設定・取得
   void Position(const glm::vec3& p) { position = p; }
   const glm::vec3& Position() const { return position; }
@@ -88,7 +87,7 @@ public:
   // 矩形の設定・取得
   void Rectangle(const Rect& r) { rect = r; }
   const Rect& Rectangle() const { return rect; }
-
+#endif
   bool IsDead() const { return lifetime <= 0; }
 
 private:
@@ -119,7 +118,7 @@ public:
   // 座標の設定・取得
   void Position(const glm::vec3& p) { ep.position = p; }
   const glm::vec3& Position() const { return ep.position; }
-
+#if 0
   // 回転の設定・取得
   void Rotation(const glm::vec3& r) { ep.rotation = r; }
   const glm::vec3& Rotation() const { return ep.rotation; }
@@ -132,7 +131,7 @@ public:
 
   void Gravity(float g) { ep.gravity = g; }
   float Gravity() const { return ep.gravity; }
-
+#endif
   void Id(int n) { ep.id = n; }
   int Id() const { return ep.id; }
 
@@ -141,18 +140,18 @@ public:
 private:
   void AddParticle();
 
-  ParticleEmitterParameter ep;
-  ParticleParameter pp;
+  ParticleEmitterParameter ep; // エミッターのパラメーター.
+  ParticleParameter pp;        // パーティクルのパラメーター.
 
   Texture::Image2DPtr texture; // パーティクル用テクスチャ.
-  float interval = 0;
-  float timer = 0;
-  float emissionTimer = 0;
+  float interval = 0;          // パーティクルの発生間隔(秒).
+  float timer = 0;             // 経過時間(秒).
+  float emissionTimer = 0;     // パーティクル発生タイマー(秒).
 
-  size_t count = 0;
-  size_t baseVertex = 0;
+  size_t count = 0;      // 描画するインデックス数.
+  size_t baseVertex = 0; // 描画の基準となる頂点のオフセット.
 
-  std::list<Particle>  particles;
+  std::list<Particle>  particles; // パーティクルリスト.
 };
 
 /**
@@ -169,7 +168,7 @@ public:
   ParticleEmitterPtr Find(int id) const;
   void Remove(const ParticleEmitterPtr&);
   void Clear();
-  void Update(float deltatime, const glm::mat4& matView);
+  void Update(float deltatime);
   void Draw(const glm::mat4& matProj, const glm::mat4& matView);
 
 private:
