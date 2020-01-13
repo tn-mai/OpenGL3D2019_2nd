@@ -231,11 +231,14 @@ bool ParticleSystem::Init(size_t maxParticleCount)
 *
 * @param  ep  エミッターの初期化パラメータ.
 * @param  pp  パーティクルの初期化パラメータ.
+*
+* @return 追加したエミッター.
 */
-void ParticleSystem::Add(const ParticleEmitterParameter& ep, const ParticleParameter& pp)
+ParticleEmitterPtr ParticleSystem::Add(const ParticleEmitterParameter& ep, const ParticleParameter& pp)
 {
   ParticleEmitterPtr p = std::make_shared<ParticleEmitter>(ep, pp);
   emitters.push_back(p);
+  return p;
 }
 
 /**

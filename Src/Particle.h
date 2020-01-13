@@ -164,7 +164,7 @@ public:
   ~ParticleSystem() = default;
 
   bool Init(size_t maxParticleCount);
-  void Add(const ParticleEmitterParameter& ep, const ParticleParameter& pp);
+  ParticleEmitterPtr Add(const ParticleEmitterParameter& ep, const ParticleParameter& pp);
   ParticleEmitterPtr Find(int id) const;
   void Remove(const ParticleEmitterPtr&);
   void Clear();
