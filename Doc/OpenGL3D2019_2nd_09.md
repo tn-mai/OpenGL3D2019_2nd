@@ -1228,4 +1228,28 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
 
 本テキストで作成したパーティクル・システムには、1枚のテクスチャに複数の画像を配置して、それをランダムに表示する機能が備わっています。この機能を利用して、より炎らしい表現をしてみましょう。
 
-まず、
+まず以下のURLから炎パーティクル用の画像をダウンロードして、Resフォルダに追加してください。
+
+`https://github.com/tn-mai/OpenGL3D2019_2nd/blob/master/Res/FireParticle.tga`
+
+次に、エミッター1個目を追加するプログラムを、次のように修正してください。
+
+```diff
+     // エミッター1個目.
+     ParticleEmitterParameter ep;
+-    ep.imagePath = "Res/DiskParticle.tga";
++    ep.imagePath = "Res/FireParticle.tga";
++    ep.tiles = glm::ivec2(2, 2);
+     ep.position = glm::vec3(96.5f, 0, 95);
+     ep.position.y = heightMap.Height(ep.position);
+     ep.emissionsPerSecond = 20.0f;
+```
+
+tiles(たいるず)メンバ変数は、テクスチャが縦横いくつの画像を含んでいるかを指定します。FireParticle.tgaは2x2の画像を含んでいるので、縦2個、横2個の値を設定しているわけです。
+
+プログラムが書けたらビルドして実行してください。円盤テクススチャのときより炎らしい映像になっていたら成功です。
+
+<div style="text-align: center;width: 100%;">
+<img src="images/09_result2.jpg" style="width:80%; margin-left:auto; margin-right:auto"/>
+<div style="white-space: pre;">[前よりは炎っぽい？]</div>
+</div>
