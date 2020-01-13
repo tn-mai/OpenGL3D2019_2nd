@@ -1,8 +1,6 @@
 [OpenGL 3D 2019 後期 第09回]
 
-# 火花
-
-<br>
+# パーティクル<br>上から見るか 横から見るか
 
 ## 目標
 
@@ -84,14 +82,12 @@ void main()
 今度はShader.cppを開き、Program::Reset関数に、次のプログラムを追加してください。
 
 ```diff
-   locViewInfo = glGetUniformLocation(id, "viewInfo");
    locCameraInfo = glGetUniformLocation(id, "cameraInfo");
    locBlurDirection = glGetUniformLocation(id, "blurDirection");
 +  locMatInverseViewRotation = glGetUniformLocation(id, "matInverseViewRotation");
 
    glUseProgram(id);
    const GLint texColorLoc = glGetUniformLocation(id, "texColor");
-   if (texColorLoc >= 0) {
 ```
 
 次に、Program::SetViewProjectionMatrix関数の定義の下に、以下のプログラムを追加してください。
