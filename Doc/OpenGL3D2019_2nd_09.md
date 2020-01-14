@@ -263,9 +263,9 @@ class ParticleSystem;
 続いて、エミッタークラスを定義します。こちらは、更新関数と死亡判定関数に加えて、描画関数も作ります。パーティクルクラスの定義の下に、次のプログラムを追加してください。
 
 ```diff
-+  float rotation = 0;                      // 回転.
-+  glm::vec4 color = glm::vec4(1);          // 色と不透明度.
-+};
+   float rotation = 0;                      // 回転.
+   glm::vec4 color = glm::vec4(1);          // 色と不透明度.
+ };
 +
 +/**
 +* パーティクル放出クラス.
@@ -810,7 +810,7 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
 +ParticleEmitterPtr ParticleSystem::Find(int id) const
 +{
 +  auto itr = std::find_if(emitters.begin(), emitters.end(),
-+    [id](const ParticleEmitterPtr& p) { return p->Id() == id; });
++    [id](const ParticleEmitterPtr& p) { return p->ep.id == id; });
 +  if (itr != emitters.end()) {
 +    return *itr;
 +  }
