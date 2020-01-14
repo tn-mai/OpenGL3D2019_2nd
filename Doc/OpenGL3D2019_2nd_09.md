@@ -46,7 +46,7 @@ void main()
 {
   outColor = vColor;
   outTexCoord = vTexCoord;
-  vec3 offset = matInverseViewRotation * vec3(vOffset, 1.0);
+  vec3 offset = matInverseViewRotation * vec3(vOffset, 0.0);
   gl_Position = matMVP * vec4(vCenter + offset, 1.0);
 }
 ```
