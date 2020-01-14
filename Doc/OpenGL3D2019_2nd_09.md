@@ -905,7 +905,7 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
 +  for (auto& e : emitters) {
 +    e->baseVertex = vertices.size();
 +    e->count = 0;
-+    for (auto& particle : e.p->particles) {
++    for (auto& particle : e->particles) {
 +    }
 +  }
 +  vbo.BufferSubData(0, vertices.size() * sizeof(Vertex), vertices.data());
@@ -920,7 +920,7 @@ Draw関数は、描画するパーティクルが存在すれば(つまり、cou
    for (auto& e : emitters) {
      e->baseVertex = vertices.size();
      e->count = 0;
-     for (auto& particle : e.p->particles) {
+     for (auto& particle : e->particles) {
 +      // 座標変換行列を作成.
 +      const glm::mat4 matR =
 +        glm::rotate(glm::mat4(1), particle.rotation, glm::vec3(0, 0, 1));
