@@ -250,7 +250,7 @@ ParticleEmitterPtr ParticleSystem::Add(const ParticleEmitterParameter& ep, const
 */
 ParticleEmitterPtr ParticleSystem::Find(int id) const
 {
-  auto itr = std::find_if(emitters.begin(), emitters.end(), [id](const ParticleEmitterPtr& p) { return p->Id() == id; });
+  auto itr = std::find_if(emitters.begin(), emitters.end(), [id](const ParticleEmitterPtr& p) { return p->ep.id == id; });
   if (itr != emitters.end()) {
     return *itr;
   }
