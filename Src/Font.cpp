@@ -155,6 +155,12 @@ bool FontRenderer::AddString(const glm::vec2& position, const wchar_t* str)
 {
   glm::vec2 pos = position;
   for (const wchar_t* itr = str; *itr; ++itr) {
+    // 改行判定.
+    if (*itr == L'\n') {
+      pos.x = position.x;
+      pos.y -= lineHeight;
+      continue;
+    }
     const CharacterInfo& info = characterInfoList[*itr];
     if (info.id >= 0 && info.size.x && info.size.y) {
       // スプライトの座標は画像の中心を指定するが、フォントは左上を指定する.

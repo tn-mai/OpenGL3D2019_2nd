@@ -63,6 +63,9 @@ bool MainGameScene::Initialize()
   fontRenderer.Init(1000);
   fontRenderer.LoadFromFile("Res/font.fnt");
 
+  textWindow.Init("Res/TextWindow.tga", glm::vec2(1), glm::vec2(0.8f), glm::vec2(-0.1f, 0.2f));
+  textWindow.Open(L"テキストウィンドウの実験\nこれは改行テスト。\n３行目。");
+
   meshBuffer.Init(1'000'000 * sizeof(Mesh::Vertex), 3'000'000 * sizeof(GLushort));
   meshBuffer.LoadMesh("Res/red_pine_tree.gltf");
   meshBuffer.LoadMesh("Res/jizo_statue.gltf");
@@ -347,6 +350,8 @@ void MainGameScene::ProcessInput()
   // プレイヤー操作.
   player->ProcessInput();
 
+  textWindow.ProcessInput();
+
   if (window.GetGamePad().buttonDown & GamePad::START) {
     SceneStack::Instance().Push(std::make_shared<StatusScene>());
   } else if (window.GetGamePad().buttonDown & GamePad::X) {
@@ -495,6 +500,8 @@ void MainGameScene::Update(float deltaTime)
     fontRenderer.AddString(glm::vec2(-32 * 4, 0), L"目的を達成した！");
   }
   fontRenderer.EndUpdate();
+
+  textWindow.Update(deltaTime);
 }
 
 /**
@@ -692,6 +699,7 @@ void MainGameScene::Render()
     simpleMesh->materials[0].texture[0] = fboBloom[0][0]->GetColorTexture();
     Mesh::Draw(simpleMesh, glm::mat4(1));
 
+    textWindow.Draw();
     fontRenderer.Draw(screenSize);
   }
 

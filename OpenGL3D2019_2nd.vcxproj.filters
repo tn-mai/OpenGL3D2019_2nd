@@ -117,6 +117,9 @@
     <ClInclude Include="Src\Particle.h">
       <Filter>ソース ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Src\TextWindow.h">
+      <Filter>ソース ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -200,6 +203,9 @@
     <ClCompile Include="Src\Particle.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Src\TextWindow.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -263,6 +269,9 @@
       <Filter>リソース ファイル</Filter>
     </Image>
     <Image Include="Res\CircleParticle.tga">
+      <Filter>リソース ファイル</Filter>
+    </Image>
+    <Image Include="Res\TextWindow.tga">
       <Filter>リソース ファイル</Filter>
     </Image>
   </ItemGroup>
