@@ -18,7 +18,7 @@ public:
   TextWindow() = default;
   ~TextWindow() = default;
 
-  bool Init(const char* imagePath, const glm::vec2& scale, const glm::vec2& textAreaOffset, const glm::vec2& textAreaSize);
+  bool Init(const char* imagePath, const glm::vec2& position, const glm::vec2& textAreaMargin, const glm::vec2& textAreaOffset);
   void ProcessInput();
   void Update(float deltaTime);
   void Draw();
@@ -27,10 +27,9 @@ public:
   void Close();
 
 private:
-  glm::vec3 position = glm::vec3(0); // ウィンドウ左上の位置.
-  glm::vec2 scale = glm::vec2(1); // ウィンドウのサイズ.
-  glm::vec2 textAreaOffset = glm::vec2(-0.1f, -0.2f);
-  glm::vec2 textAreaSize = glm::vec2(0.8f);
+  glm::vec2 position = glm::vec3(0); // ウィンドウ左上の位置.
+  glm::vec2 textAreaMargin = glm::vec2(8);
+  glm::vec2 textAreaOffset = glm::vec2(0);
 
   std::wstring text; // 表示するテキスト.
   int outputCount = 0; // 出力済みの文字数.

@@ -8,11 +8,11 @@
 /**
 *
 */
-bool TextWindow::Init(const char* imagePath, const glm::vec2& scale, const glm::vec2& textAreaOrigin, const glm::vec2& textAreaSize)
+bool TextWindow::Init(const char* imagePath, const glm::vec2& position, const glm::vec2& textAreaMargin, const glm::vec2& textAreaOffset)
 {
-  this->scale = scale;
+  this->position = position;
   this->textAreaOffset = textAreaOffset;
-  this->textAreaSize = textAreaSize;
+  this->textAreaMargin = textAreaMargin;
   sprBackground = Sprite(Texture::Image2D::Create(imagePath));
   if (!spriteRenderer.Init(100, "Res/Sprite.vert", "Res/Sprite.frag")) {
     std::cerr << "[エラー]" << __func__ << ": テキストウィンドウの初期化に失敗.\n";
@@ -51,17 +51,12 @@ void TextWindow::Update(float deltaTime)
     return;
   }
 
-  const GLFWEW::Window& window = GLFWEW::Window::Instance();
-  const Texture::Image2DPtr tex = sprBackground.Texture();
-  const glm::vec2 screenScale = scale * (static_cast<float>(window.Width()) / tex->Width());
-
-  sprBackground.Position(position);
-  sprBackground.Scale(screenScale);
+  sprBackground.Position(glm::vec3(position, 0));
   spriteRenderer.BeginUpdate();
   spriteRenderer.AddVertices(sprBackground);
   spriteRenderer.EndUpdate();
 
-  if (outputCount >= static_cast<int>(text.size())) {
+  if (outputCount > 0 && outputCount >= static_cast<int>(text.size())) {
     return;
   }
   if (waitForInput) {
@@ -76,10 +71,23 @@ void TextWindow::Update(float deltaTime)
   fontRenderer.BeginUpdate();
   fontRenderer.Color(glm::vec4(1));
   const std::wstring tmp = text.substr(0, outputCount);
-  glm::vec2 offset = glm::vec2(tex->Width(), tex->Height()) * glm::vec2(-0.5f, 0.5f);
-  offset *= screenScale + textAreaOffset;
+
+  const Texture::Image2DPtr tex = sprBackground.Texture();
+  const glm::vec2 windowSize = glm::vec2(tex->Width(), tex->Height());
+  const glm::vec2 textAreaSize = windowSize - textAreaMargin * 2.0f;
+  glm::vec2 offset = textAreaSize * glm::vec2(-0.5f, 0.5f);
+  offset += textAreaOffset;
   offset.y -= fontRenderer.LineHeight();
-  fontRenderer.AddString(position + glm::vec3(offset, 0), tmp.c_str());
+#if 0
+  float maxLineWidth = textAreaScale.x;
+  float lineWidth = 0;
+  for (int i = 0; i < outputCount; ++i) {
+    lineWidth += fontRenderer.XAdvance(text[i]);
+    if (lineWidth )
+  }
+#endif
+  fontRenderer.Color(glm::vec4(0, 0, 0, 1));
+  fontRenderer.AddString(glm::vec3(position + offset, 0), tmp.c_str());
   fontRenderer.EndUpdate();
 }
 

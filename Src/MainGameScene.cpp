@@ -63,8 +63,8 @@ bool MainGameScene::Initialize()
   fontRenderer.Init(1000);
   fontRenderer.LoadFromFile("Res/font.fnt");
 
-  textWindow.Init("Res/TextWindow.tga", glm::vec2(1), glm::vec2(0.8f), glm::vec2(-0.1f, 0.2f));
-  textWindow.Open(L"テキストウィンドウの実験\nこれは改行テスト。\n３行目。");
+  textWindow.Init("Res/TextWindow.tga", glm::vec2(0, -248), glm::vec2(48, 32), glm::vec2(0));
+  textWindow.Open(L"テキストウィンドウの実験\nこれは改行テスト。\n３行目。\n4\n5");
 
   meshBuffer.Init(1'000'000 * sizeof(Mesh::Vertex), 3'000'000 * sizeof(GLushort));
   meshBuffer.LoadMesh("Res/red_pine_tree.gltf");
