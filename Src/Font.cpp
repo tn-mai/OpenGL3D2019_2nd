@@ -155,12 +155,6 @@ bool FontRenderer::AddString(const glm::vec2& position, const wchar_t* str)
 {
   glm::vec2 pos = position;
   for (const wchar_t* itr = str; *itr; ++itr) {
-    // 改行判定.
-    if (*itr == L'\n') {
-      pos.x = position.x;
-      pos.y -= lineHeight;
-      continue;
-    }
     const CharacterInfo& info = characterInfoList[*itr];
     if (info.id >= 0 && info.size.x && info.size.y) {
       // スプライトの座標は画像の中心を指定するが、フォントは左上を指定する.
@@ -208,4 +202,19 @@ void FontRenderer::Draw(const glm::vec2& screenSize) const
 float FontRenderer::LineHeight() const
 {
   return lineHeight;
+}
+
+/**
+* 文字の横幅を取得する.
+*
+* @param c 横幅を調べる文字.
+*
+* @return 文字cの横幅.
+*/
+float FontRenderer::XAdvance(wchar_t c) const
+{
+  if (c < 0 || c >= characterInfoList.size()) {
+    return 0;
+  }
+  return characterInfoList[c].xadvance;
 }

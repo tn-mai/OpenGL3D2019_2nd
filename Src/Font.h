@@ -27,6 +27,7 @@ public:
   void EndUpdate();
   void Draw(const glm::vec2&) const;
   float LineHeight() const;
+  float XAdvance(wchar_t c) const;
 
   // フォント色の設定と取得.
   void Color(const glm::vec4& c) { color = c; }

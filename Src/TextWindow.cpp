@@ -63,14 +63,14 @@ void TextWindow::Update(float deltaTime)
     return;
   }
 
-  outputTimer += deltaTime;
-  const int c = static_cast<int>(outputTimer / interval);
-  outputCount += c;
-  outputTimer -= static_cast<float>(c) * interval;
-
-  fontRenderer.BeginUpdate();
-  fontRenderer.Color(glm::vec4(1));
-  const std::wstring tmp = text.substr(0, outputCount);
+  if (interval > 0) {
+    outputTimer += deltaTime;
+    const int c = static_cast<int>(outputTimer / interval);
+    outputCount += c;
+    outputTimer -= static_cast<float>(c) * interval;
+  } else {
+    outputCount = text.size();
+  }
 
   const Texture::Image2DPtr tex = sprBackground.Texture();
   const glm::vec2 windowSize = glm::vec2(tex->Width(), tex->Height());
@@ -78,16 +78,26 @@ void TextWindow::Update(float deltaTime)
   glm::vec2 offset = textAreaSize * glm::vec2(-0.5f, 0.5f);
   offset += textAreaOffset;
   offset.y -= fontRenderer.LineHeight();
-#if 0
-  float maxLineWidth = textAreaScale.x;
+
+  fontRenderer.BeginUpdate();
+  fontRenderer.Color(glm::vec4(0, 0, 0, 1));
+  offset += position;
   float lineWidth = 0;
+  int outputOffset = 0;
   for (int i = 0; i < outputCount; ++i) {
     lineWidth += fontRenderer.XAdvance(text[i]);
-    if (lineWidth )
+    if (text[i] == L'\n' || lineWidth > textAreaSize.x) {
+      const std::wstring tmp = text.substr(outputOffset, i - outputOffset);
+      fontRenderer.AddString(glm::vec3(offset, 0), tmp.c_str());
+      offset.y -= fontRenderer.LineHeight();
+      outputOffset = i;
+      lineWidth = 0;
+    }
   }
-#endif
-  fontRenderer.Color(glm::vec4(0, 0, 0, 1));
-  fontRenderer.AddString(glm::vec3(position + offset, 0), tmp.c_str());
+  if (outputOffset < outputCount) {
+    const std::wstring tmp = text.substr(outputOffset, outputCount - outputOffset);
+    fontRenderer.AddString(glm::vec3(offset, 0), tmp.c_str());
+  }
   fontRenderer.EndUpdate();
 }
 
