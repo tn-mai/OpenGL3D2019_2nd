@@ -4,6 +4,7 @@
 #include "GLFWEW.h"
 #include "MainGameScene.h"
 #include "StatusScene.h"
+#include "EventScene.h"
 #include "GameOverScene.h"
 #include "SkeletalMeshActor.h"
 #include <glm/gtc/matrix_transform.hpp>
@@ -336,6 +337,8 @@ bool MainGameScene::Initialize()
       trees.Add(p);
     }
   }
+
+  SceneStack::Instance().Push(std::make_shared<EventScene>("Res/SampleScript.txt"));
 
   return true;
 }

@@ -160,6 +160,8 @@
     <ClInclude Include="Src\Audio\Audio.h" />
     <ClInclude Include="Src\BufferObject.h" />
     <ClInclude Include="Src\Collision.h" />
+    <ClInclude Include="Src\EventScene.h" />
+    <ClInclude Include="Src\EventScript.h" />
     <ClInclude Include="Src\Font.h" />
     <ClInclude Include="Src\GameOverScene.h" />
     <ClInclude Include="Src\GamePad.h" />
@@ -197,6 +199,8 @@
     <ClCompile Include="Src\Audio\Audio.cpp" />
     <ClCompile Include="Src\BufferObject.cpp" />
     <ClCompile Include="Src\Collision.cpp" />
+    <ClCompile Include="Src\EventScene.cpp" />
+    <ClCompile Include="Src\EventScript.cpp" />
     <ClCompile Include="Src\Font.cpp" />
     <ClCompile Include="Src\GameOverScene.cpp" />
     <ClCompile Include="Src\GLFWEW.cpp" />
@@ -245,6 +249,9 @@
     <Image Include="Res\CircleParticle.tga" />
     <Image Include="Res\FireParticle.tga" />
     <Image Include="Res\TextWindow.tga" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Res\SampleScript.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

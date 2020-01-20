@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include <iostream>
 #include "Src/TitleScene.h"
+#include "Src/EventScript.h"
 #include "Src/GLFWEW.h"
 #include "Src/SkeletalMesh.h"
 #include "Src/Audio/Audio.h"
@@ -28,6 +29,9 @@ int main()
   SceneStack& sceneStack = SceneStack::Instance();
   sceneStack.Push(std::make_shared<TitleScene>());
 
+  EventScriptEngine& scriptEngine = EventScriptEngine::Instance();
+  scriptEngine.Init();
+
   while (!window.ShouldClose()) {
     const float deltaTime = static_cast<float>(window.DeltaTime());
     window.UpdateTimer();
@@ -43,6 +47,7 @@ int main()
     Mesh::SkeletalAnimation::ResetUniformData();
 
     sceneStack.Update(deltaTime);
+    scriptEngine.Update(deltaTime);
 
     // スケルタル・アニメーション用データをGPUメモリに転送.
     Mesh::SkeletalAnimation::UploadUniformData();
@@ -59,6 +64,7 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     sceneStack.Render();
+    scriptEngine.Draw();
     window.SwapBuffers();
   }
 

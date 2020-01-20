@@ -31,6 +31,9 @@
     <Filter Include="ソース ファイル\Light">
       <UniqueIdentifier>{3b03b3b9-78e6-4bf2-815f-861ba8a5f0dd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\Scripts">
+      <UniqueIdentifier>{abb3a80d-3582-4e00-b7f0-0547a028c0a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -120,6 +123,12 @@
     <ClInclude Include="Src\TextWindow.h">
       <Filter>ソース ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Src\EventScene.h">
+      <Filter>ソース ファイル\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\EventScript.h">
+      <Filter>ソース ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -206,6 +215,12 @@
     <ClCompile Include="Src\TextWindow.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Src\EventScene.cpp">
+      <Filter>ソース ファイル\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\EventScript.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -274,5 +289,10 @@
     <Image Include="Res\TextWindow.tga">
       <Filter>リソース ファイル</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Res\SampleScript.txt">
+      <Filter>リソース ファイル\Scripts</Filter>
+    </Text>
   </ItemGroup>
 </Project>
