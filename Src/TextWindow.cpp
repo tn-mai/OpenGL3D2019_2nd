@@ -98,7 +98,7 @@ void TextWindow::Update(float deltaTime)
     rowList.push_back(text.substr(outputOffset, outputCount - outputOffset));
   }
 
-  // テキスト領域のパラメーターを考慮して、最初の文字の位置(offset)を計算する.
+  // 最初に表示する行の位置(offset)を計算する.
   glm::vec2 offset = textAreaSize * glm::vec2(-0.5f, 0.5f);
   offset += textAreaOffset;
   offset.y -= fontRenderer.LineHeight();
@@ -162,9 +162,6 @@ void TextWindow::SetText(const wchar_t* str)
 */
 void TextWindow::Close()
 {
-  text.clear();
-  outputCount = 0;
-  outputTimer = 0;
   isOpen = false;
 }
 
