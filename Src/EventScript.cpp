@@ -64,7 +64,6 @@ bool EventScriptEngine::Execute(const char* filename)
 */
 void EventScriptEngine::Update(float deltaTime)
 {
-  textWindow.ProcessInput();
   if (textWindow.IsFinished()) {
     const GamePad gamepad = GLFWEW::Window::Instance().GetGamePad();
     if (gamepad.buttonDown & (GamePad::A | GamePad::B | GamePad::START)) {

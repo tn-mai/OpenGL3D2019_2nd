@@ -353,8 +353,6 @@ void MainGameScene::ProcessInput()
   // ƒvƒŒƒCƒ„[‘€ì.
   player->ProcessInput();
 
-  textWindow.ProcessInput();
-
   if (window.GetGamePad().buttonDown & GamePad::START) {
     SceneStack::Instance().Push(std::make_shared<StatusScene>());
   } else if (window.GetGamePad().buttonDown & GamePad::X) {
