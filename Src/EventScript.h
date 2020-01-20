@@ -16,7 +16,7 @@ public:
 static EventScriptEngine& Instance();
 
   bool Init(int maxVariableCount = 100);
-  bool Execute(const char* filename);
+  bool RunScript(const char* filename);
   void Update(float deltaTime);
   void Draw();
 
@@ -34,7 +34,8 @@ private:
   std::string filename;
   std::wstring script;
 
-  bool waitForInput = false;
+  bool isInitialized = false; // エンジンが初期化されていればtrue.
+  bool isFinished = false; // スクリプトの実行が終了したらtrue.
 
   TextWindow textWindow;
 };

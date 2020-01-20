@@ -3,8 +3,6 @@
 */
 #include "EventScene.h"
 #include "EventScript.h"
-#include <fstream>
-#include <sstream>
 
 /**
 * コンストラクタ.
@@ -21,7 +19,7 @@ EventScene::EventScene(const char* filename) :
 */
 bool EventScene::Initialize()
 {
-  return EventScriptEngine::Instance().Execute(filename.c_str());
+  return EventScriptEngine::Instance().RunScript(filename.c_str());
 }
 
 /**
