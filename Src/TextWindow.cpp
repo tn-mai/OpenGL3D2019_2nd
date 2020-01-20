@@ -48,6 +48,10 @@ void TextWindow::ProcessInput()
 void TextWindow::Update(float deltaTime)
 {
   if (!isOpen) {
+    spriteRenderer.BeginUpdate();
+    spriteRenderer.EndUpdate();
+    fontRenderer.BeginUpdate();
+    fontRenderer.EndUpdate();
     return;
   }
 
@@ -117,13 +121,16 @@ void TextWindow::Draw()
 */
 void TextWindow::Open(const wchar_t* str)
 {
+  SetText(str);
+  isOpen = true;
+}
+
+void TextWindow::SetText(const wchar_t* str)
+{
   text = str;
   outputCount = 0;
   outputTimer = 0;
   waitForInput = false;
-  fontRenderer.BeginUpdate();
-  fontRenderer.EndUpdate();
-  isOpen = true;
 }
 
 /**
@@ -135,8 +142,14 @@ void TextWindow::Close()
   outputCount = 0;
   outputTimer = 0;
   waitForInput = false;
-  fontRenderer.BeginUpdate();
-  fontRenderer.EndUpdate();
   isOpen = false;
+}
+
+/**
+*
+*/
+bool TextWindow::IsFinished() const
+{
+  return isOpen && (outputCount >= static_cast<int>(text.size()));
 }
 
