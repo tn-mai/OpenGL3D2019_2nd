@@ -41,7 +41,6 @@ public:
 
   bool Init(const char* imagePath, const glm::vec2& position,
     const glm::vec2& textAreaMargin, const glm::vec2& textAreaOffset);
-  void ProcessInput();
   void Update(float deltaTime);
   void Draw();
 
