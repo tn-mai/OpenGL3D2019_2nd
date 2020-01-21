@@ -773,7 +773,7 @@ private:
    std::string tmp = ss.str();
 +  setlocale(LC_CTYPE, "ja-JP");
 +  const size_t size = mbstowcs(nullptr, tmp.c_str(), 0);
-+  script.resize(size + 1);
++  script.resize(size);
 +  mbstowcs(&script[0], tmp.c_str(), size);
  }
 ```
