@@ -789,7 +789,7 @@ mbstowcs関数は、std::stringなどに含まれる「マルチバイト文字�
 
 ```diff
    const size_t size = mbstowcs(nullptr, tmp.c_str(), 0);
-   script.resize(size + 1);
+   script.resize(size);
    mbstowcs(&script[0], tmp.c_str(), size);
 +
 +  // パラメータを設定.
@@ -894,7 +894,19 @@ mbstowcs関数は、std::stringなどに含まれる「マルチバイト文字�
 
 ### 2.9 スクリプト・エンジンを組み込む
 
-作成したスクリプトエンジンを、プログラムに組み込みます。main関数に、次のプログラムを追加してください。
+作成したスクリプトエンジンを、プログラムに組み込みます。main関数の書かれたcppファイルを開き、以下のようにEventScript.hをインクルードしてください。cppファイルの配置によっては`Src/`の部分は不要かもしれません。そのあたりは各自判断して追加してください。
+
+```diff
+ #include "Src/GLFWEW.h"
+ #include "Src/SkeletalMesh.h"
+ #include "Src/Audio/Audio.h"
++#include "Src/EventScript.h"
+
+int main()
+{
+```
+
+ヘッダーファイルをインクルードしたら、スクリプトエンジンを初期化し、更新や描画を行うプログラムを追加します。main関数に、次のプログラムを追加してください。
 
 ```diff
    SceneStack& sceneStack = SceneStack::Instance();
