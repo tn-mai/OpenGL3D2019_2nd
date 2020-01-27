@@ -27,6 +27,7 @@ public:
   void SetText(const wchar_t*);
   void Close();
   bool IsFinished() const;
+  bool IsOpen() const { return isOpen; }
 
 private:
   glm::vec2 position = glm::vec3(0); // ウィンドウ左上の位置.

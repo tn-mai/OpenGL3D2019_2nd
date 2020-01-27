@@ -46,6 +46,10 @@ bool TextWindow::Init(const char* imagePath, const glm::vec2& position,
 void TextWindow::Update(float deltaTime)
 {
   if (!isOpen) {
+    spriteRenderer.BeginUpdate();
+    spriteRenderer.EndUpdate();
+    fontRenderer.BeginUpdate();
+    fontRenderer.EndUpdate();
     return;
   }
 

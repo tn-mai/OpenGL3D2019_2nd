@@ -7,6 +7,7 @@
 #include "EventScene.h"
 #include "GameOverScene.h"
 #include "SkeletalMeshActor.h"
+#include "EventScript.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/constants.hpp>
 #include <random>
@@ -196,7 +197,7 @@ bool MainGameScene::Initialize()
   lightBuffer.BindToShader(meshBuffer.GetTerrainShader());
   lightBuffer.BindToShader(meshBuffer.GetWaterShader());
 
-  glm::vec3 startPos(100, 0, 100);
+  glm::vec3 startPos(95, 0, 105);
   startPos.y = heightMap.Height(startPos);
   player = std::make_shared<PlayerActor>(&heightMap, meshBuffer, startPos);
 
@@ -338,6 +339,9 @@ bool MainGameScene::Initialize()
     }
   }
 
+  Update(0);
+
+  EventScriptEngine::Instance().SetCamera(&camera);
   SceneStack::Instance().Push(std::make_shared<EventScene>("Res/SampleScript.txt"));
 
   return true;
@@ -449,7 +453,6 @@ void MainGameScene::Update(float deltaTime)
     p->SetSpotLightList(spotLightIndex);
   }
 
-  const glm::mat4 matView = glm::lookAt(camera.position, camera.target, camera.up);
   particleSystem.Update(deltaTime);
 
   // 敵を全滅させたら目的達成フラグをtrueにする.
@@ -771,27 +774,5 @@ bool MainGameScene::HandleJizoEffects(int id, const glm::vec3& pos)
     enemies.Add(p);
   }
   return true;
-}
-
-/**
-* カメラのパラメータを更新する.
-*
-* @param matView 更新に使用するビュー行列.
-*/
-void MainGameScene::Camera::Update(const glm::mat4& matView)
-{
-  const float scale = -1000.0f;
-  const glm::vec4 pos = matView * glm::vec4(target, 1);
-  focalPlane = pos.z * scale;
-#if 1
-  const float imageDistance = sensorSize * 0.5f / glm::tan(fov * 0.5f); // 焦点距離.
-  //const float fov = 2.0f * glm::atan(sensorSize * 0.5f / imageDistance);
-  focalLength = 1.0f / ((1.0f / focalPlane) + (1.0f / imageDistance));
-#else
-  // 上の式を変形して除算を減らしたバージョン.
-  // `https://www.slideshare.net/siliconstudio/cedec-2010`で提示されている式.
-  const float f = (focalPlane * sensorSize * 0.5f) / (glm::tan(fov * 0.5f) * focalPlane + sensorSize * 0.5f);
-#endif
-  aperture = focalLength / fNumber;
 }
 
