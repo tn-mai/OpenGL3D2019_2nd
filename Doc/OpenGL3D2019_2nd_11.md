@@ -220,14 +220,15 @@ EventScriptEngine::Update関数に、次のプログラムを追加してくだ�
 +      } else {
 +        // ウィンドウが開いてたら表示終了を待つ. 表示が終了したら、キー入力を待つ.
 +        // キー入力があったら、ウィンドウを閉じて、次の命令の処理へ進む.
-+        if (textWindow.IsFinished()) {
-+          const GamePad gamepad = GLFWEW::Window::Instance().GetGamePad();
-+          if (gamepad.buttonDown & (GamePad::A | GamePad::B | GamePad::START)) {
-+            textWindow.Close();
+         if (textWindow.IsFinished()) {
+           const GamePad gamepad = GLFWEW::Window::Instance().GetGamePad();
+           if (gamepad.buttonDown & (GamePad::A | GamePad::B | GamePad::START)) {
+             textWindow.Close();
+-            isFinished = true;
 +            ++programCounter;
 +            continue;
-+          }
-+        }
+           }
+         }
 +      }
 +      yield = true;
 +      break;
