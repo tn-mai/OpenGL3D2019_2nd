@@ -857,7 +857,20 @@ OpeningScript.txtに代入命令を追加して、変数1に2を代入してく�
 
 ### 4.3 四則演算を読み取る
 
-それでは、四則演算を読み取りましょう。基本的には代入命令と同じやりかたになります。EventScriptEngine::RunScript関数の、print命令を読み取るプログラムの下に、次のプログラムを追加してください。
+それでは、四則演算を読み取りましょう。基本的には代入命令と同じやりかたになります。四則演算では、代入先、左辺値、演算子、右辺値、の4つの引数が現れますが、読み取り用の変数が不足しているので、まずは変数を追加しましょう。EventScriptEngine::RunScript関数に、次のプログラムを追加してください。
+
+```diff
+   std::string line;
+   char buf[1000];
+-  char a[20], b[20], op[20]; // スクリプト引数用.
++  char a[20], b[20], c[20], op[20]; // スクリプト引数用.
+   std::vector<size_t> jumpStack; // ジャンプ先設定用.
+   while (std::getline(ifs, line)) {
+     // 先頭の空白を除去する.
+     line.erase(0, line.find_first_not_of(" \t\n"));
+```
+
+続いて、読み取り部分を書いていきます。同じくEventScriptEngine::RunScript関数の中の、print命令を読み取るプログラムの下に、次のプログラムを追加してください。
 
 ```diff
        inst.type = InstructionType::print;
