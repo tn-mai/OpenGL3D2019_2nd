@@ -754,6 +754,7 @@ endif命令自体は、`script`に追加されないことに注意してくだ�
 +        // 比較結果がfalseならendifの位置にジャンプ.
 +        if (!result) {
 +          programCounter = inst.jump;
++          break;
 +        }
 +      }
 +      ++programCounter;
