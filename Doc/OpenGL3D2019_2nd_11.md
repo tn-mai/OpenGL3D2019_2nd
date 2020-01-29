@@ -422,7 +422,7 @@ Set関数は`Argument`に値を設定する関数です。Get関数は、`Argume
 +void EventScriptEngine::Set(EventScriptEngine::Argument& arg, const char* str)
 +{
 +  if (str[0] == '[') {
-+    VariableId d;
++    VariableId id;
 +    if (sscanf(str, "[%d]", &id) >= 1) {
 +      arg = id;
 +    }
