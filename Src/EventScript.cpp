@@ -131,6 +131,8 @@ bool EventScriptEngine::RunScript(const char* filename)
     return false;
   }
 
+  script.clear();
+
   size_t lineCount = 0;
   std::string line;
   char buf[1000];

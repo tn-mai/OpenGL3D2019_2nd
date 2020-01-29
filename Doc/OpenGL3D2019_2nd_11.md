@@ -117,6 +117,7 @@ C++言語では行の区切りに「；(せみころん)」を使っていまし
 -  script.resize(size + 1);
 -  mbstowcs(&script[0], tmp.c_str(), size);
 +
++  script.clear(); // 以前のスクリプトを消去.
 +  size_t lineCount = 0; // 読み込んだ行数.
 +  std::string line;
 +  char buf[1000];
