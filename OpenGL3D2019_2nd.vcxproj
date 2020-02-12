@@ -255,6 +255,7 @@
     <Image Include="Res\CircleParticle.tga" />
     <Image Include="Res\FireParticle.tga" />
     <Image Include="Res\TextWindow.tga" />
+    <Image Include="Res\white4x4.tga" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Res\SampleScript.txt" />

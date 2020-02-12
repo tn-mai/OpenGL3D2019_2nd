@@ -3,6 +3,7 @@
 */
 #ifndef SCENE_H_INCLUDED
 #define SCENE_H_INCLUDED
+#include "Sprite.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -60,6 +61,15 @@ public:
   void Update(float);
   void Render();
 
+  enum class FadeMode {
+    none,
+    in,
+    out,
+  };
+  FadeMode GetFadeMode() const { return fadeMode; }
+  void FadeIn() { fadeMode = FadeMode::in; }
+  void FadeOut() { fadeMode = FadeMode::out; }
+
 private:
   SceneStack();
   SceneStack(const SceneStack&) = delete;
@@ -67,6 +77,11 @@ private:
   ~SceneStack() = default;
 
   std::vector<ScenePtr> stack;
+  ScenePtr nextScene;
+
+  Sprite sprFader;
+  SpriteRenderer spriteRenderer;
+  FadeMode fadeMode = FadeMode::in;
 };
 
 #endif // SCENE_H_INCLUDED

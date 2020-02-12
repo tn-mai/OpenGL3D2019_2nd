@@ -1,6 +1,7 @@
 /**
 * @file Scene.cpp
 */
+#include "GLFWEW.h"
 #include "Scene.h"
 #include <iostream>
 
@@ -108,6 +109,11 @@ SceneStack& SceneStack::Instance()
 SceneStack::SceneStack()
 {
   stack.reserve(16);
+  spriteRenderer.Init(10, "Res/Sprite.vert", "Res/Sprite.frag");
+  sprFader = Sprite(Texture::Image2D::Create("Res/white4x4.tga"));
+  sprFader.Color(glm::vec4(0, 0, 0, 1));
+  const GLFWEW::Window& window = GLFWEW::Window::Instance();
+  sprFader.Scale(glm::vec2(static_cast<float>(window.Width()) / 4.0f, static_cast<float>(window.Height()) / 4.0f));
 }
 
 /**
@@ -158,13 +164,10 @@ void SceneStack::Replace(ScenePtr p)
   } else {
     sceneName = Current().Name();
     Current().Stop();
-    Current().Finalize();
-    stack.pop_back();
   }
-  stack.push_back(p);
+  nextScene = p;
+  fadeMode = FadeMode::out;
   std::cout << "[シーン リプレース] " << sceneName << " -> " << p->Name() << "\n";
-  Current().Initialize();
-  Current().Play();
 }
 
 /**
@@ -223,6 +226,35 @@ void SceneStack::Update(float deltaTime)
       e->Update(deltaTime);
     }
   }
+
+  const float fadeSpeed = 2;
+  glm::vec4 c = sprFader.Color();
+  if (fadeMode == FadeMode::in) {
+    c.a -= fadeSpeed * deltaTime;
+    if (c.a <= 0) {
+      c.a = 0;
+      fadeMode = FadeMode::none;
+    }
+  } else if (fadeMode == FadeMode::out) {
+    c.a += fadeSpeed * deltaTime;
+    if (c.a >= 1) {
+      c.a = 1;
+      if (nextScene) {
+        Current().Finalize();
+        stack.pop_back();
+        stack.push_back(nextScene);
+        Current().Initialize();
+        Current().Play();
+        fadeMode = FadeMode::in;
+      } else {
+        fadeMode = FadeMode::none;
+      }
+    }
+  }
+  sprFader.Color(c);
+  spriteRenderer.BeginUpdate();
+  spriteRenderer.AddVertices(sprFader);
+  spriteRenderer.EndUpdate();
 }
 
 /**
@@ -234,5 +266,9 @@ void SceneStack::Render()
     if (e->IsVisible()) {
       e->Render();
     }
+  }
+  if (sprFader.Color().a > 0) {
+    const GLFWEW::Window& window = GLFWEW::Window::Instance();
+    spriteRenderer.Draw(glm::vec2(window.Width(), window.Height()));
   }
 }

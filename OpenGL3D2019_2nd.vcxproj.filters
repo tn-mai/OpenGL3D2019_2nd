@@ -295,6 +295,9 @@
     <Image Include="Res\TextWindow.tga">
       <Filter>リソース ファイル</Filter>
     </Image>
+    <Image Include="Res\white4x4.tga">
+      <Filter>リソース ファイル</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Res\SampleScript.txt">
