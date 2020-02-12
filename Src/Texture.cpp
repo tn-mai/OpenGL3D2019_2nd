@@ -399,6 +399,10 @@ bool LoadImage2D(const char* path, ImageData* imageData)
 // TGAヘッダを読み込む
 	std::basic_ifstream<uint8_t> ifs;
 	ifs.open(path, std::ios_base::binary);
+  if (!ifs) {
+    std::cerr << "[エラー]" << __func__ << path << "を読み込めません.\n";
+    return false;
+  }
 	//以下2行　１メガバイトのメモリを割り当てて、一度にたくさん読み込めるようにしている
 	std::vector<uint8_t> readBuffer(1'000'000);
 	ifs.rdbuf()->pubsetbuf(readBuffer.data(), readBuffer.size());
