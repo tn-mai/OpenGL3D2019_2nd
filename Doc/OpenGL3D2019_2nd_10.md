@@ -265,6 +265,9 @@ TextWindow.cppに戻り、表示状態を更新する`TextWindow::Update`(てき
 +      return;
 +    }
 +    outputCount += n;
++    if (outputCount >= static_cast<int>(text.size())) {
++      outputCount = static_cast<int>(text.size());
++    }
 +    outputTimer -= static_cast<float>(n) * interval;
 +  } else {
 +    outputCount = text.size();

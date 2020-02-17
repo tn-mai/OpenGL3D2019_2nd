@@ -61,7 +61,8 @@ void TextWindow::Update(float deltaTime)
 
   // すべての文字が表示済み(outputCountがテキスト文字数以上)なら
   // フォントを更新する必要はない.
-  if (outputCount >= static_cast<int>(text.size())) {
+  const int maxOutputCount = static_cast<int>(text.size());
+  if (outputCount >= maxOutputCount) {
     return;
   }
 
@@ -74,9 +75,12 @@ void TextWindow::Update(float deltaTime)
       return;
     }
     outputCount += c;
+    if (outputCount >= maxOutputCount) {
+      outputCount = maxOutputCount;
+    }
     outputTimer -= static_cast<float>(c) * interval;
   } else {
-    outputCount = text.size();
+    outputCount = maxOutputCount;
   }
 
   // 文章表示領域のサイズを計算.

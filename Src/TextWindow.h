@@ -37,7 +37,7 @@ private:
   std::wstring text; // 表示するテキスト.
   int outputCount = 0; // 出力済みの文字数.
   bool isOpen = false; // ウィンドウが開いていたらtrue.
-  float interval = 0.1f; // 文字の表示間隔(秒).
+  float interval = 0.01f; // 文字の表示間隔(秒).
   float outputTimer = 0; // 文字表示タイマー(秒).
 
   FontRenderer fontRenderer;
