@@ -90,11 +90,14 @@ public:
   float GetTotalAnimationTime() const;
   State GetState() const;
   bool Play(const std::string& name, bool loop = true);
+  bool Play(size_t index, bool loop = true);
   bool Stop();
   bool Pause();
   bool Resume();
   void SetAnimationSpeed(float speed);
   float GetAnimationSpeed() const;
+  size_t GetAnimationCount() const;
+  int GetAnimationIndex() const;
   void SetPosition(float);
   float GetPosition() const;
   bool IsFinished() const;

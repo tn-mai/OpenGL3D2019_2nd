@@ -576,6 +576,27 @@ bool SkeletalMesh::Play(const std::string& animationName, bool loop)
 }
 
 /**
+* アニメーションを再生する.
+*
+* @param index  再生するアニメーションのインデックス.
+* @param loop   ループ再生の指定(true=ループする false=ループしない).
+*
+* @retval true  再生開始.
+* @retval false 再生失敗.
+*/
+bool SkeletalMesh::Play(size_t index, bool loop)
+{
+  if (file && index < file->animations.size()) {
+    animation = &file->animations[index];
+    frame = 0;
+    state = State::play;
+    this->loop = loop;
+    return true;
+  }
+  return false;
+}
+
+/**
 * アニメーションの再生を停止する.
 *
 * @retval true  成功.
@@ -675,6 +696,33 @@ void SkeletalMesh::SetAnimationSpeed(float speed)
 float SkeletalMesh::GetAnimationSpeed() const
 {
   return animationSpeed;
+}
+
+/**
+* アニメーションの総数を取得する.
+*
+* @return アニメーションの総数.
+*/
+size_t SkeletalMesh::GetAnimationCount() const
+{
+  if (file) {
+    return file->animations.size();
+  }
+  return 0;
+}
+
+/**
+* 再生中のアニメーションのインデックスを取得する.
+*
+* @retval -1  アニメーションを持たない、あるいはアニメーションが指定されていない.
+* @retval 0～ アニメーションのインデックス.
+*/
+int SkeletalMesh::GetAnimationIndex() const
+{
+  if (file && animation) {
+    return animation - &file->animations[0];
+  }
+  return -1;
 }
 
 /**
