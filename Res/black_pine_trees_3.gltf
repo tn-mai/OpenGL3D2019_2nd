@@ -3,9 +3,9 @@
         {
             "bufferView" : 0,
             "componentType" : 5123,
-            "count" : 11079,
+            "count" : 11235,
             "max" : [
-                4424
+                4528
             ],
             "min" : [
                 0
@@ -15,23 +15,23 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 4425,
+            "count" : 4529,
             "max" : [
-                2.4084653854370117,
-                5.294445514678955,
+                2.5485618114471436,
+                5.301272392272949,
                 2.483078718185425
             ],
             "min" : [
-                -2.667936086654663,
+                -2.676243305206299,
                 -0.996462345123291,
-                -2.382603168487549
+                -2.395786762237549
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 4425,
+            "count" : 4529,
             "max" : [
                 0.999267578125,
                 0.99993896484375,
@@ -47,7 +47,7 @@
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 4425,
+            "count" : 4529,
             "max" : [
                 1.0,
                 1.0
@@ -61,7 +61,7 @@
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 4425,
+            "count" : 4529,
             "max" : [
                 0,
                 0,
@@ -79,7 +79,7 @@
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 4425,
+            "count" : 4529,
             "max" : [
                 0.0,
                 0.0,
@@ -96,50 +96,51 @@
         }
     ],
     "asset" : {
+        "copyright" : "tn_mai",
         "generator" : "Khronos Blender glTF 2.0 exporter",
         "version" : "2.0"
     },
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 22158,
+            "byteLength" : 22470,
             "byteOffset" : 0,
             "target" : 34963
         },
         {
             "buffer" : 0,
-            "byteLength" : 53100,
-            "byteOffset" : 22160,
+            "byteLength" : 54348,
+            "byteOffset" : 22472,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 53100,
-            "byteOffset" : 75260,
+            "byteLength" : 54348,
+            "byteOffset" : 76820,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 35400,
-            "byteOffset" : 128360,
+            "byteLength" : 36232,
+            "byteOffset" : 131168,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 35400,
-            "byteOffset" : 163760,
+            "byteLength" : 36232,
+            "byteOffset" : 167400,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 70800,
-            "byteOffset" : 199160,
+            "byteLength" : 72464,
+            "byteOffset" : 203632,
             "target" : 34962
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 269960,
+            "byteLength" : 276096,
             "uri" : "black_pine_trees_3.bin"
         }
     ],
