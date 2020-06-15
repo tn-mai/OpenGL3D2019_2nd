@@ -47,6 +47,11 @@ Window::~Window()
   }
 }
 
+void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+{
+  std::cerr << message << "\n";
+}
+
 /**
 * GLFW/GLEWの初期化
 *
@@ -72,6 +77,11 @@ bool Window::Init(int w, int h, const char* title)
   }
 
   if (!window) {
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     window = glfwCreateWindow(w, h, title, nullptr, nullptr);
     if (!window) {
       return false;
@@ -83,6 +93,8 @@ bool Window::Init(int w, int h, const char* title)
     std::cerr << "ERROR: GLEW の初期化に失敗しました." << std::endl;
     return false;
   }
+
+  glDebugMessageCallback(DebugCallback, nullptr);
 
   width = w;
   height = h;
@@ -102,6 +114,10 @@ bool Window::Init(int w, int h, const char* title)
 
   const GLubyte* extensions = glGetString(GL_EXTENSIONS);
   std::cout << "Extensions: " << extensions << std::endl;
+
+  // 前方互換性コアプロファイルを指定すると、GLFW, GLEWの初期化でエラーが報告されるので、ここで無理やり消す.
+  // 当面、実害はないようだが、将来的にはライブラリを最新版に置き換える必要があるだろう.
+  glGetError();
 
 #define PrintGLInfo(name) { \
   GLint tmp; \
