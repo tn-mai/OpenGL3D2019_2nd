@@ -513,6 +513,9 @@ void MainGameScene::Update(float deltaTime)
 */
 void MainGameScene::RenderMesh(Mesh::DrawType drawType)
 {
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+
   glm::vec3 cubePos(100, 0, 100);
   cubePos.y = heightMap.Height(cubePos);
   const glm::mat4 matModel = glm::translate(glm::mat4(1), cubePos);
@@ -521,8 +524,9 @@ void MainGameScene::RenderMesh(Mesh::DrawType drawType)
 
   player->Draw(drawType);
   enemies.Draw(drawType);
-  trees.Draw(drawType);
   objects.Draw(drawType);
+  glDisable(GL_CULL_FACE);
+  trees.Draw(drawType);
 
   glm::vec3 treePos(110, 0, 110);
   treePos.y = heightMap.Height(treePos);
@@ -530,6 +534,7 @@ void MainGameScene::RenderMesh(Mesh::DrawType drawType)
     glm::translate(glm::mat4(1), treePos) * glm::scale(glm::mat4(1), glm::vec3(3));
   Mesh::Draw(meshBuffer.GetFile("Res/red_pine_tree.gltf"), matTreeModel, drawType);
 
+  glEnable(GL_CULL_FACE);
   if (drawType == Mesh::DrawType::color) {
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     Mesh::Draw(meshBuffer.GetFile("Water"), glm::mat4(1), drawType);
