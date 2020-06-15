@@ -371,18 +371,6 @@ void MainGameScene::ProcessInput()
 */
 void MainGameScene::Update(float deltaTime)
 {
-  // カメラの状態を更新.
-  {
-    const float distance = 15.0f;
-    const float angle = glm::radians(-30.0f);
-    const glm::vec3 axis(1, 0, 0);
-    const glm::vec3 offset(glm::rotate(glm::mat4(1), glm::radians(0.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::mat4(1), angle, axis) * glm::vec4(0, 0, distance, 1));
-    camera.target = player->position + glm::vec3(0, 1.2f, 0);
-    camera.position = camera.target + offset;
-    camera.fNumber = 1.4f;
-    camera.fov = glm::radians(60.0f);
-  }
-
   player->Update(deltaTime);
   enemies.Update(deltaTime);
   trees.Update(deltaTime);
@@ -414,6 +402,18 @@ void MainGameScene::Update(float deltaTime)
     if (hit) {
       attackCollision->health = 0;
     }
+  }
+
+  // カメラの状態を更新.
+  {
+    const float distance = 15.0f;
+    const float angle = glm::radians(-30.0f);
+    const glm::vec3 axis(1, 0, 0);
+    const glm::vec3 offset(glm::rotate(glm::mat4(1), glm::radians(0.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::mat4(1), angle, axis) * glm::vec4(0, 0, distance, 1));
+    camera.target = player->position + glm::vec3(0, 1.2f, 0);
+    camera.position = camera.target + offset;
+    camera.fNumber = 4.4f;
+    camera.fov = glm::radians(60.0f);
   }
 
   // 死亡アニメーションの終わった敵を消す.
