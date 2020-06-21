@@ -4,6 +4,7 @@
 #include "PlayerActor.h"
 #include "SkeletalMesh.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 /**
 * コンストラクタ.
@@ -16,9 +17,14 @@
 PlayerActor::PlayerActor(const Terrain::HeightMap* hm, const Mesh::Buffer& buffer,
   const glm::vec3& pos, const glm::vec3& rot)
   : SkeletalMeshActor(buffer.GetSkeletalMesh("Bikuni"), "Player", 13, pos, rot),
+  prevPosition(pos),
   heightMap(hm)
 {
-  colLocal = Collision::CreateSphere(glm::vec3(0, 0.7f, 0), 0.7f);
+  //colLocal = Collision::CreateSphere(glm::vec3(0, 0.7f, 0), 0.7f);
+  //colLocal = Collision::CreateCapsule(glm::vec3(0, 0.5f, 0), glm::vec3(0, 1, 0), 0.5f);
+  colLocal = Collision::CreateOBB(glm::vec3(0, 0.75f, 0),
+    glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, -1),
+    glm::vec3(0.5f, 0.75f, 0.5f));
   GetMesh()->Play("Idle");
   state = State::idle;
 }
@@ -30,6 +36,8 @@ PlayerActor::PlayerActor(const Terrain::HeightMap* hm, const Mesh::Buffer& buffe
 */
 void PlayerActor::Update(float deltaTime)
 {
+  prevPosition = position;
+
   // 座標の更新.
   SkeletalMeshActor::Update(deltaTime);
   if (attackCollision) {
@@ -47,10 +55,17 @@ void PlayerActor::Update(float deltaTime)
     // 乗っている物体から離れたら空中判定にする.
     if (boardingActor) {
       Collision::Shape col = colWorld;
-      col.s.r += 0.1f; // 衝突判定を少し大きくする.
-      glm::vec3 pa, pb;
-      if (!Collision::TestShapeShape(col, boardingActor->colWorld, &pa, &pb)) {
+      col = Collision::CreateCapsule(position + glm::vec3(0, 0.5f, 0), position + glm::vec3(0, 1, 0), 0.5f);
+      col.c.seg.a.y -= 0.3f; // 衝突判定を縦長にする.
+      col.c.r = 0.25f;
+      const Collision::Result result = Collision::TestShapeShape(col, boardingActor->colWorld);
+      if (!result.isHit) {
         boardingActor.reset();
+      } else {
+        const float theta = glm::dot(result.normal, glm::vec3(0, 1, 0));
+        if (theta < glm::cos(glm::radians(30.0f))) {
+          boardingActor.reset();
+        }
       }
     }
 
@@ -150,6 +165,67 @@ void PlayerActor::OnHit(const ActorPtr& b, const glm::vec3& p)
     colWorld.s.center -= deltaVelocity;
   }
   SetBoardingActor(b);
+}
+
+/**
+* 衝突ハンドラ.
+*
+* @param b 衝突相手のアクター.
+* @param p 衝突が発生した座標.
+*/
+void PlayerActor::OnHit(const ActorPtr& b, const Collision::Result& result)
+{
+  if (isnan(result.pa.x) || isnan(result.pa.y) || isnan(result.pa.z)) {
+    std::cerr << "[NaN]\n";
+  }
+  if (isnan(result.pb.x) || isnan(result.pb.y) || isnan(result.pb.z)) {
+    std::cerr << "[NaN]\n";
+  }
+  if (isnan(result.normal.x) || isnan(result.normal.y) || isnan(result.normal.z)) {
+    std::cerr << "[NaN]\n";
+  }
+#if 1
+  float d = glm::dot(result.normal, result.pb - result.pa);
+  if (d < 0 || d > 1) {
+    std::cerr << "[Long distance]\n";
+  }
+  if (d < 0) {
+    d = 0;
+  }
+  const glm::vec3 v = result.normal * (d + 0.01f);
+  colWorld.obb.center += v;
+  position += v;
+  if (!isInAir && !boardingActor) {
+    const float newY = heightMap->Height(position);
+    colWorld.obb.center.y += newY - position.y;
+    position.y = newY;
+  }
+#else
+  if (colLocal.type == Collision::Shape::Type::obb) {
+    const glm::vec3 v = position - prevPosition;
+    colWorld.obb.center -= v;
+    position = prevPosition;
+    return;
+  }
+  const glm::vec3 q = Collision::ClosestPointSegment(colWorld.c.seg, result.pa);
+  const float d = colWorld.c.r - glm::length(result.pa - q); // 侵入距離.
+  if (d < 0 || d > 1) {
+    std::cerr << "[Long distance]\n";
+  }
+  const glm::vec3 v = result.normal * (d + 0.01f);
+  position += v;
+  colWorld.c.seg.a += v;
+  colWorld.c.seg.b += v;
+  if (!isInAir && !boardingActor) {
+    const float newY = heightMap->Height(position);
+    colWorld.c.seg.a.y += newY - position.y;
+    colWorld.c.seg.b.y += newY - position.y;
+    position.y = newY;
+  }
+#endif
+  if (glm::dot(result.normal, glm::vec3(0, 1, 0)) >= cos(glm::radians(30.0f))) {
+    SetBoardingActor(b);
+  }
 }
 
 /**

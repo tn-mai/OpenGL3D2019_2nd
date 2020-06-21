@@ -19,7 +19,8 @@ public:
   virtual ~PlayerActor() = default;
 
   virtual void Update(float) override;
-  virtual void OnHit(const ActorPtr&, const glm::vec3&);
+  virtual void OnHit(const ActorPtr&, const glm::vec3&) override;
+  virtual void OnHit(const ActorPtr&, const Collision::Result&) override;
   void Jump();
   void ProcessInput();
   void SetBoardingActor(ActorPtr);
@@ -44,6 +45,8 @@ private:
   float moveSpeed = 5.0f;    ///< ˆÚ“®‘¬“x.
   ActorPtr attackCollision;  ///< UŒ‚”»’è.
   float attackTimer = 0;     ///< UŒ‚ŽžŠÔ.
+  
+  glm::vec3 prevPosition = glm::vec3(0);
 
   const Terrain::HeightMap* heightMap = nullptr;
 };

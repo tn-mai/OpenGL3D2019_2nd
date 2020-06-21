@@ -42,6 +42,9 @@ public:
 
   virtual void Draw(Mesh::DrawType = Mesh::DrawType::color);
   virtual void OnHit(const ActorPtr&, const glm::vec3&) {}
+  virtual void OnHit(const ActorPtr& other, const Collision::Result& result) {
+    OnHit(other, result.pa);
+  }
 
 public:
   std::string name; ///< アクターの名前.

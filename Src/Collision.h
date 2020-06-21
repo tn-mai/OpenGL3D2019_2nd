@@ -64,10 +64,27 @@ Shape CreateCapsule(const glm::vec3&, const glm::vec3&, float);
 Shape CreateOBB(const glm::vec3& center, const glm::vec3& axisX,
   const glm::vec3& axisY, const glm::vec3& axisZ, const glm::vec3& e);
 
+/**
+* 衝突結果を表す構造体.
+*/
+struct Result
+{
+  bool isHit = false; ///< 衝突の有無.
+  glm::vec3 pa, pb; ///< 形状AおよびBから見た衝突平面上の座標.
+  glm::vec3 normal; ///< 形状Aから見た衝突平面の法線.
+};
+
 bool TestSphereSphere(const Sphere&, const Sphere&);
 bool TestSphereCapsule(const Sphere& s, const Capsule& c, glm::vec3* p);
 bool TestSphereOBB(const Sphere& s, const OrientedBoundingBox& obb, glm::vec3* p);
 bool TestShapeShape(const Shape&, const Shape&, glm::vec3* pa, glm::vec3* pb);
+Result TestShapeShape(const Shape&, const Shape&);
+
+glm::vec3 ClosestPointSegment(const Segment& seg, const glm::vec3& p);
+
+#ifndef NDEBUG
+bool Test();
+#endif
 
 } // namespace Collision
 

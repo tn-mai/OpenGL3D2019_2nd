@@ -328,13 +328,14 @@ void DetectCollision(const ActorPtr& a, const ActorPtr& b, CollisionHandlerType 
   if (a->health <= 0 || b->health <= 0) {
     return;
   }
-  glm::vec3 pa, pb;
-  if (Collision::TestShapeShape(a->colWorld, b->colWorld, &pa, &pb)) {
+  Collision::Result r = Collision::TestShapeShape(a->colWorld, b->colWorld);
+  if (r.isHit) {
     if (handler) {
-      handler(a, b, pb);
+      handler(a, b, r.pa);
     } else {
-      a->OnHit(b, pb);
-      b->OnHit(a, pa);
+      a->OnHit(b, r);
+      r.normal *= -1;
+      b->OnHit(a, r);
     }
   }
 }
@@ -355,13 +356,14 @@ void DetectCollision(const ActorPtr& a, ActorList& b, CollisionHandlerType handl
     if (actorB->health <= 0) {
       continue;
     }
-    glm::vec3 pa, pb;
-    if (Collision::TestShapeShape(a->colWorld, actorB->colWorld, &pa, &pb)) {
+    Collision::Result r = Collision::TestShapeShape(a->colWorld, actorB->colWorld);
+    if (r.isHit) {
       if (handler) {
-        handler(a, actorB, pb);
+        handler(a, actorB, r.pa);
       } else {
-        a->OnHit(actorB, pb);
-        actorB->OnHit(a, pa);
+        a->OnHit(actorB, r);
+        r.normal *= -1;
+        actorB->OnHit(a, r);
       }
       if (a->health <= 0) {
         break;
@@ -387,13 +389,14 @@ void DetectCollision(ActorList& a, ActorList& b, CollisionHandlerType handler)
       if (actorB->health <= 0) {
         continue;
       }
-      glm::vec3 pa, pb;
-      if (Collision::TestShapeShape(actorA->colWorld, actorB->colWorld, &pa, &pb)) {
+      Collision::Result r = Collision::TestShapeShape(actorA->colWorld, actorB->colWorld);
+      if (r.isHit) {
         if (handler) {
-          handler(actorA, actorB, pb);
+          handler(actorA, actorB, r.pa);
         } else {
-          actorA->OnHit(actorB, pb);
-          actorB->OnHit(actorA, pa);
+          actorA->OnHit(actorB, r);
+          r.normal *= -1;
+          actorB->OnHit(actorA, r);
         }
         if (actorA->health <= 0) {
           break;
