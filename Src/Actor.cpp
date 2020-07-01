@@ -334,7 +334,8 @@ void DetectCollision(const ActorPtr& a, const ActorPtr& b, CollisionHandlerType 
       handler(a, b, r.pa);
     } else {
       a->OnHit(b, r);
-      r.normal *= -1;
+      std::swap(r.pa, r.pb);
+      std::swap(r.na, r.nb);
       b->OnHit(a, r);
     }
   }
@@ -362,7 +363,8 @@ void DetectCollision(const ActorPtr& a, ActorList& b, CollisionHandlerType handl
         handler(a, actorB, r.pa);
       } else {
         a->OnHit(actorB, r);
-        r.normal *= -1;
+        std::swap(r.pa, r.pb);
+        std::swap(r.na, r.nb);
         actorB->OnHit(a, r);
       }
       if (a->health <= 0) {
@@ -395,7 +397,8 @@ void DetectCollision(ActorList& a, ActorList& b, CollisionHandlerType handler)
           handler(actorA, actorB, r.pa);
         } else {
           actorA->OnHit(actorB, r);
-          r.normal *= -1;
+          std::swap(r.pa, r.pb);
+          std::swap(r.na, r.nb);
           actorB->OnHit(actorA, r);
         }
         if (actorA->health <= 0) {

@@ -233,41 +233,44 @@ Result TestCapsuleCapsule(const Capsule& c0, const Capsule& c1)
   glm::vec3 p0, p1;
   const float d = ClosestPoint(c0.seg, c1.seg, p0, p1);
   const float r = c0.r + c1.r;
-  Result result;
-  if (d < r * r) {
-    result.isHit = true;
-    result.normal = glm::normalize(p0 - p1);
-    result.pa = p1 + result.normal * c1.r;
-    result.pb = p0 - result.normal * c0.r;
+  if (d > r * r) {
+    return {};
   }
+  Result result;
+  result.isHit = true;
+  result.na = glm::normalize(p1 - p0);
+  result.nb = -result.na;
+  result.pa = p0 + result.na * c0.r;
+  result.pb = p1 + result.nb * c1.r;
   return result;
 }
 
 /**
+* 光線と軸平行境界ボックスが交差しているか調べる.
 *
-*/
-struct AABB {
-  glm::vec3 min;
-  glm::vec3 max;
-};
-
-/**
+* @param p    光線の始点.
+* @param d    光線の方向ベクトル.
+* @param aabb 軸平行境界ボックス.
+* @param tmin 交差距離を格納する変数.
+* @param q    交差点を格納する変数.
 *
+* @retval true  交差している.
+* @retval false 交差していない.
 */
-bool IntersectRayAABB(const glm::vec3& p, const glm::vec3& d, const AABB& a, float& tmin, glm::vec3& q)
+bool IntersectRayAABB(const glm::vec3& p, const glm::vec3& d, const AABB& aabb, float& tmin, glm::vec3& q)
 {
   tmin = 0;
   float tmax = FLT_MAX;
 
   for (int i = 0; i < 3; ++i) {
     if (std::abs(d[i]) < FLT_EPSILON) {
-      if (p[i] < a.min[i] || p[i] > a.max[i]) {
+      if (p[i] < aabb.min[i] || p[i] > aabb.max[i]) {
         return false;
       }
     } else {
       const float ood = 1.0f / d[i];
-      float t1 = (a.min[i] - p[i]) * ood;
-      float t2 = (a.max[i] - p[i]) * ood;
+      float t1 = (aabb.min[i] - p[i]) * ood;
+      float t2 = (aabb.max[i] - p[i]) * ood;
       if (t1 > t2) {
         std::swap(t1, t2);
       }
@@ -283,7 +286,12 @@ bool IntersectRayAABB(const glm::vec3& p, const glm::vec3& d, const AABB& a, flo
 }
 
 /**
+* AABBの頂点を取得する.
 *
+* @param aabb AABB.
+* @param n    頂点を選択するビットフラグ.
+*
+* @return nに対応する頂点座標.
 */
 glm::vec3 Corner(const AABB& aabb, int n)
 {
@@ -331,61 +339,97 @@ Result TestCapsuleAABB(const Capsule& c, const AABB& aabb)
   // m = 0ならば、交点pはAABBの内側にある.
   // pを最も近い面に射影し、その点を衝突点とする.
   if (!m) {
-    glm::vec3 q(aabb.min.x, p.y, p.z);
+    Result result;
+    result.isHit = true;
+
+    result.pb = glm::vec3(aabb.min.x, p.y, p.z);
+    result.nb = glm::vec3(-1, 0, 0);
     float d = p.x - aabb.min.x;
     if (aabb.max.x - p.x < d) {
       d = aabb.max.x - p.x;
-      q = glm::vec3(aabb.max.x, p.y, p.z);
+      result.pb = glm::vec3(aabb.max.x, p.y, p.z);
+      result.nb = glm::vec3(1, 0, 0);
     }
     if (p.y - aabb.min.y < d) {
       d = p.y - aabb.min.y;
-      q = glm::vec3(p.x, aabb.min.y, p.z);
+      result.pb = glm::vec3(p.x, aabb.min.y, p.z);
+      result.nb = glm::vec3(0,-1, 0);
     }
     if (aabb.max.y - p.y < d) {
       d = aabb.max.y - p.y;
-      q = glm::vec3(p.x, aabb.max.y, p.z);
+      result.pb = glm::vec3(p.x, aabb.max.y, p.z);
+      result.nb = glm::vec3(0, 1, 0);
     }
     if (p.z - aabb.min.z < d) {
       d = p.z - aabb.min.z;
-      q = glm::vec3(p.x, p.y, aabb.min.z);
+      result.pb = glm::vec3(p.x, p.y, aabb.min.z);
+      result.nb = glm::vec3(0, 0,-1);
     }
     if (aabb.max.z - p.z < d) {
       d = aabb.max.z - p.z;
-      q = glm::vec3(p.x, p.y, aabb.max.z);
+      result.pb = glm::vec3(p.x, p.y, aabb.max.z);
+      result.nb = glm::vec3(0, 0, 1);
     }
-    Result result;
-    result.isHit = true;
-    result.normal = glm::normalize(q - p);
-    result.pa = q;
-    result.pb = p + result.normal * c.r;
+    result.na = -result.nb;
+    result.pa = p + result.na * c.r;
     return result;
   }
 
+  // pは面領域にある.
   if ((m & (m - 1)) == 0) {
     Result result;
     result.isHit = true;
+#if 0
     if (u & 1) {
-      result.normal = glm::vec3(-1, 0, 0);
+      result.nb = glm::vec3(-1, 0, 0);
     } else if (u & 2) {
-      result.normal = glm::vec3(0,-1, 0);
+      result.nb = glm::vec3(0,-1, 0);
     } else if (u & 4) {
-      result.normal = glm::vec3(0, 0,-1);
+      result.nb = glm::vec3(0, 0,-1);
     } else if (v & 1) {
-      result.normal = glm::vec3(1, 0, 0);
+      result.nb = glm::vec3(1, 0, 0);
     } else if (v & 2) {
-      result.normal = glm::vec3(0, 1, 0);
+      result.nb = glm::vec3(0, 1, 0);
     } else if (v & 4) {
-      result.normal = glm::vec3(0, 0, 1);
+      result.nb = glm::vec3(0, 0, 1);
     }
+    // pがu側(マイナス側)にある場合はminの逆方向に縮小. v側にある場合はmaxの逆方向に縮小.
+    // result.pbは法線選択時に計算してもよいが、いちいち書くのが面倒なのでdotで縮小方向と距離を計算.
     glm::vec3 q = aabb.min;
     if (v) {
       q = aabb.max;
     }
-    result.pa = p - result.normal * glm::dot(p - q, result.normal);
-    result.pb = p - result.normal * c.r;
+    // この時点でpは拡張されたAABB上にある.
+    // 法線の逆方向に移動した点を実際の衝突点とする.
+    result.pb = p - result.nb * glm::dot(p - q, result.nb);
+#else
+    if (u & 1) {
+      result.nb = glm::vec3(-1, 0, 0);
+      result.pb = p + result.nb * (p.x - aabb.min.x);
+    } else if (u & 2) {
+      result.nb = glm::vec3(0,-1, 0);
+      result.pb = p + result.nb * (p.y - aabb.min.y);
+    } else if (u & 4) {
+      result.nb = glm::vec3(0, 0,-1);
+      result.pb = p + result.nb * (p.z - aabb.min.z);
+    } else if (v & 1) {
+      result.nb = glm::vec3(1, 0, 0);
+      result.pb = p - result.nb * (p.x - aabb.max.x);
+    } else if (v & 2) {
+      result.nb = glm::vec3(0, 1, 0);
+      result.pb = p - result.nb * (p.y - aabb.max.y);
+    } else if (v & 4) {
+      result.nb = glm::vec3(0, 0, 1);
+      result.pb = p - result.nb * (p.z - aabb.max.z);
+    }
+#endif
+    result.na = -result.nb;
+    result.pa = p + result.na * c.r;
     return result;
   }
 
+  // pは頂点領域にある.
+  // 頂点に接する3辺のうち、最も接近した最近接点を持つ辺と最初に衝突したとみなす.
   if (m == 7) {
     const glm::vec3 bv = Corner(aabb, v);
     glm::vec3 c0, c1, c2, c3;
@@ -407,23 +451,26 @@ Result TestCapsuleAABB(const Capsule& c, const AABB& aabb)
     }
     Result result;
     result.isHit = true;
-    result.normal = glm::normalize(c0 - c1);
-    result.pa = c1;
-    result.pb = c0 - result.normal * c.r;
+    result.na = glm::normalize(c1 - c0);
+    result.pa = c0 + result.na * c.r;
+    result.pb = c1;
     return result;
   }
 
+  // pは辺領域にある.
   {
     glm::vec3 c0, c1;
-    const float d = ClosestPoint(c.seg, Segment{ Corner(aabb, u ^ 7), Corner(aabb, v) }, c0, c1);
+    const Segment edge = { Corner(aabb, u ^ 7), Corner(aabb, v) };
+    const float d = ClosestPoint(c.seg, edge, c0, c1);
     if (d > c.r * c.r) {
       return {};
     }
     Result result;
     result.isHit = true;
-    result.normal = glm::normalize(c0 - c1);
-    result.pa = c1;
-    result.pb = c0 - result.normal * c.r;
+    result.na = glm::normalize(c1 - c0);
+    result.pa = c0 + result.na * c.r;
+    result.pb = c1;
+    result.nb = -result.na;
     return result;
   }
 }
@@ -450,7 +497,8 @@ Result TestCapsuleOBB(const Capsule& c, const OrientedBoundingBox& obb)
     const glm::mat3 matInvOBB(glm::inverse(matOBB));
     result.pa = matInvOBB * result.pa + obb.center;
     result.pb = matInvOBB * result.pb + obb.center;
-    result.normal = matInvOBB * result.normal;
+    result.na = matInvOBB * result.na;
+    result.nb = matInvOBB * result.nb;
   }
   return result;
 }
@@ -672,11 +720,13 @@ Result TestOBBOBB(const OrientedBoundingBox& a, const OrientedBoundingBox& b)
   if (isFaceContactA && isFaceContactB) {
     // 面で接触.
     if (qa.separationDistance > qb.separationDistance) {
-      result.normal = -qa.normal;
+      result.na = qa.normal;
+      result.nb = -qa.normal;
       result.pa = qa.pa;
       result.pb = qa.pb;
     } else {
-      result.normal = qb.normal;
+      result.na = -qb.normal;
+      result.nb = qb.normal;
       result.pa = qb.pb;
       result.pb = qb.pa;
     }
@@ -744,9 +794,10 @@ Result TestOBBOBB(const OrientedBoundingBox& a, const OrientedBoundingBox& b)
     // 辺で接触.
     glm::vec3 c0, c1;
     ClosestPoint(qe.edgeA, qe.edgeB, c0, c1);
-    result.normal = -qe.normal;
-    result.pa = c1;
-    result.pb = c0;
+    result.na = qe.normal;
+    result.nb = -qe.normal;
+    result.pa = c0;
+    result.pb = c1;
   }
   return result;
 }
@@ -1014,7 +1065,10 @@ bool TestShapeShape(const Shape& a, const Shape& b, glm::vec3* pa, glm::vec3* pb
 }
 
 /**
+* 球と何らかの形状の衝突判定.
 *
+* @param a  判定対象のシェイプその１.
+* @param b  判定対象のシェイプその２.
 *
 * @return 衝突結果を格納するResult型の値.
 */
@@ -1026,24 +1080,28 @@ Result TestSphereShape(const Sphere& a, const Shape& b)
   case Shape::Type::sphere:
     if (TestSphereSphere(a, b.s)) {
       result.isHit = true;
-      result.normal = glm::normalize(a.center - b.s.center);
-      result.pa = b.s.center + result.normal * b.s.r;
-      result.pb = a.center - result.normal * a.r;
+      result.na = glm::normalize(b.s.center - a.center);
+      result.nb = -result.na;
+      result.pa = a.center + result.na * a.r;
+      result.pb = b.s.center + result.nb * b.s.r;
     }
     break;
   case Shape::Type::capsule:
     if (TestSphereCapsule(a, b.c, &p)) {
       result.isHit = true;
-      result.normal = glm::normalize(a.center - p);
-      result.pa = p + result.normal * b.c.r;
-      result.pb = a.center - result.normal * a.r;
+      result.na = glm::normalize(p - a.center);
+      result.nb = -result.na;
+      result.pa = a.center + result.na * a.r;
+      result.pb = p + result.nb * b.c.r;
     }
     break;
   case Shape::Type::obb:
     if (TestSphereOBB(a, b.obb, &p)) {
       result.isHit = true;
-      result.pa = p;
-      result.normal = glm::normalize(a.center - p);
+      result.na = glm::normalize(p - a.center);
+      result.nb = -result.na;
+      result.pa = a.center + result.na * a.r;
+      result.pb = p;
     }
     break;
   }
@@ -1051,7 +1109,10 @@ Result TestSphereShape(const Sphere& a, const Shape& b)
 }
 
 /**
+* カプセルと何らかの形状の衝突判定.
 *
+* @param a  判定対象のシェイプその１.
+* @param b  判定対象のシェイプその２.
 *
 * @return 衝突結果を格納するResult型の値.
 */
@@ -1063,9 +1124,10 @@ Result TestCapsuleShape(const Capsule& a, const Shape& b)
     if (TestSphereCapsule(b.s, a, &p)) {
       Result result;
       result.isHit = true;
-      result.normal = glm::normalize(p - b.s.center);
-      result.pa = b.s.center + result.normal * b.s.r;
-      result.pb = p - result.normal * a.r;
+      result.na = glm::normalize(b.s.center - p);
+      result.nb = -result.na;
+      result.pa = p + result.na * a.r;
+      result.pb = b.s.center + result.nb * b.s.r;
       return result;
     }
     break;
@@ -1080,7 +1142,10 @@ Result TestCapsuleShape(const Capsule& a, const Shape& b)
 }
 
 /**
+* OBBと何らかの形状の衝突判定.
 *
+* @param a  判定対象のシェイプその１.
+* @param b  判定対象のシェイプその２.
 *
 * @return 衝突結果を格納するResult型の値.
 */
@@ -1092,14 +1157,17 @@ Result TestOBBShape(const OrientedBoundingBox& a, const Shape& b)
   case Shape::Type::sphere:
     if (TestSphereOBB(b.s, a, &p)) {
       result.isHit = true;
+      result.na = glm::normalize(b.s.center - p);
+      result.nb = -result.na;
       result.pa = p;
-      result.normal = glm::normalize(p - b.s.center);
+      result.pb = b.s.center + result.nb * b.s.r;
     }
     break;
 
   case Shape::Type::capsule:
     result = TestCapsuleOBB(b.c, a);
-    result.normal *= -1;
+    std::swap(result.na, result.nb);
+    std::swap(result.pa, result.pb);
     break;
 
   case Shape::Type::obb:

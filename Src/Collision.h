@@ -33,6 +33,14 @@ struct Capsule {
 };
 
 /**
+* 軸平行境界ボックス.
+*/
+struct AABB {
+  glm::vec3 min;
+  glm::vec3 max;
+};
+
+/**
 * 有向境界ボックス.
 */
 struct OrientedBoundingBox {
@@ -70,8 +78,10 @@ Shape CreateOBB(const glm::vec3& center, const glm::vec3& axisX,
 struct Result
 {
   bool isHit = false; ///< 衝突の有無.
-  glm::vec3 pa, pb; ///< 形状AおよびBから見た衝突平面上の座標.
-  glm::vec3 normal; ///< 形状Aから見た衝突平面の法線.
+  glm::vec3 pa; ///< 形状A上の衝突点.
+  glm::vec3 na; ///< 形状A上の衝突平面の法線.
+  glm::vec3 pb; ///< 形状B上の衝突点.
+  glm::vec3 nb; ///< 形状B上の衝突平面の法線.
 };
 
 bool TestSphereSphere(const Sphere&, const Sphere&);

@@ -21,10 +21,10 @@ PlayerActor::PlayerActor(const Terrain::HeightMap* hm, const Mesh::Buffer& buffe
   heightMap(hm)
 {
   //colLocal = Collision::CreateSphere(glm::vec3(0, 0.7f, 0), 0.7f);
-  //colLocal = Collision::CreateCapsule(glm::vec3(0, 0.5f, 0), glm::vec3(0, 1, 0), 0.5f);
-  colLocal = Collision::CreateOBB(glm::vec3(0, 0.75f, 0),
-    glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, -1),
-    glm::vec3(0.5f, 0.75f, 0.5f));
+  colLocal = Collision::CreateCapsule(glm::vec3(0, 0.5f, 0), glm::vec3(0, 1, 0), 0.5f);
+  //colLocal = Collision::CreateOBB(glm::vec3(0, 0.75f, 0),
+  //  glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, -1),
+  //  glm::vec3(0.5f, 0.75f, 0.5f));
   GetMesh()->Play("Idle");
   state = State::idle;
 }
@@ -54,15 +54,14 @@ void PlayerActor::Update(float deltaTime)
   } else if (position.y > groundHeight) {
     // æ‚Á‚Ä‚¢‚é•¨‘Ì‚©‚ç—£‚ê‚½‚ç‹ó’†”»’è‚É‚·‚é.
     if (boardingActor) {
-      Collision::Shape col = colWorld;
-      col = Collision::CreateCapsule(position + glm::vec3(0, 0.5f, 0), position + glm::vec3(0, 1, 0), 0.5f);
-      col.c.seg.a.y -= 0.3f; // Õ“Ë”»’è‚ðc’·‚É‚·‚é.
+      Collision::Shape col = Collision::CreateCapsule(position + glm::vec3(0, 0.5f, 0), position + glm::vec3(0, 1, 0), 0.5f);
+      col.c.seg.a.y -= 0.1f; // Õ“Ë”»’è‚ðc’·‚É‚·‚é.
       col.c.r = 0.25f;
       const Collision::Result result = Collision::TestShapeShape(col, boardingActor->colWorld);
       if (!result.isHit) {
         boardingActor.reset();
       } else {
-        const float theta = glm::dot(result.normal, glm::vec3(0, 1, 0));
+        const float theta = glm::dot(result.nb, glm::vec3(0, 1, 0));
         if (theta < glm::cos(glm::radians(30.0f))) {
           boardingActor.reset();
         }
@@ -181,23 +180,46 @@ void PlayerActor::OnHit(const ActorPtr& b, const Collision::Result& result)
   if (isnan(result.pb.x) || isnan(result.pb.y) || isnan(result.pb.z)) {
     std::cerr << "[NaN]\n";
   }
-  if (isnan(result.normal.x) || isnan(result.normal.y) || isnan(result.normal.z)) {
+  if (isnan(result.nb.x) || isnan(result.nb.y) || isnan(result.nb.z)) {
     std::cerr << "[NaN]\n";
   }
 #if 1
-  float d = glm::dot(result.normal, result.pb - result.pa);
+  float d = glm::dot(result.nb, result.pb - result.pa);
   if (d < 0 || d > 1) {
     std::cerr << "[Long distance]\n";
   }
   if (d < 0) {
     d = 0;
   }
-  const glm::vec3 v = result.normal * (d + 0.01f);
-  colWorld.obb.center += v;
+  const glm::vec3 v = result.nb * (d + 0.01f);
+  switch (colWorld.type) {
+  case Collision::Shape::Type::sphere:
+    colWorld.s.center += v;
+    break;
+  case Collision::Shape::Type::capsule:
+    colWorld.c.seg.a += v;
+    colWorld.c.seg.b += v;
+    break;
+  case Collision::Shape::Type::obb:
+    colWorld.obb.center += v;
+    break;
+  }
   position += v;
   if (!isInAir && !boardingActor) {
     const float newY = heightMap->Height(position);
-    colWorld.obb.center.y += newY - position.y;
+    const float offY = newY - position.y;
+    switch (colWorld.type) {
+    case Collision::Shape::Type::sphere:
+      colWorld.s.center.y += offY;
+      break;
+    case Collision::Shape::Type::capsule:
+      colWorld.c.seg.a.y += offY;
+      colWorld.c.seg.b.y += offY;
+      break;
+    case Collision::Shape::Type::obb:
+      colWorld.obb.center.y += offY;
+      break;
+    }
     position.y = newY;
   }
 #else
@@ -223,7 +245,7 @@ void PlayerActor::OnHit(const ActorPtr& b, const Collision::Result& result)
     position.y = newY;
   }
 #endif
-  if (glm::dot(result.normal, glm::vec3(0, 1, 0)) >= cos(glm::radians(30.0f))) {
+  if (glm::dot(result.nb, glm::vec3(0, 1, 0)) >= cos(glm::radians(30.0f))) {
     SetBoardingActor(b);
   }
 }
