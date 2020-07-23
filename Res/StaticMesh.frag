@@ -58,7 +58,7 @@ layout(std140) uniform LightUniformBlock
 void main()
 {
   fragColor = texture(texColor, inTexCoord);
-  if (fragColor.a < 0.1) {
+  if (fragColor.a < 0.25) {
     discard;
   }
 

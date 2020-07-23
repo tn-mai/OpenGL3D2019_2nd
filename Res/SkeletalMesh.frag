@@ -20,7 +20,7 @@ uniform sampler2DShadow texShadow;
 void main()
 {
   fragColor = inColor * texture(texColor, inTexCoord);
-  if (fragColor.a < 0.1) {
+  if (fragColor.a < 0.25) {
     discard;
   }
 
