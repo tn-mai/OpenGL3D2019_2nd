@@ -54,9 +54,8 @@ void PlayerActor::Update(float deltaTime)
   } else if (position.y > groundHeight) {
     // æ‚Á‚Ä‚¢‚é•¨‘Ì‚©‚ç—£‚ê‚½‚ç‹ó’†”»’è‚É‚·‚é.
     if (boardingActor) {
-      Collision::Shape col = Collision::CreateCapsule(position + glm::vec3(0, 0.5f, 0), position + glm::vec3(0, 1, 0), 0.5f);
-      col.c.seg.a.y -= 0.1f; // Õ“Ë”»’è‚ðc’·‚É‚·‚é.
-      col.c.r = 0.25f;
+      // c‚É×’·‚¢Õ“Ë”»’è‚ðì‚é.
+      Collision::Shape col = Collision::CreateCapsule(position + glm::vec3(0, 0.24f, 0), position + glm::vec3(0, 1.25f, 0), 0.25f);
       const Collision::Result result = Collision::TestShapeShape(col, boardingActor->colWorld);
       if (!result.isHit) {
         boardingActor.reset();
