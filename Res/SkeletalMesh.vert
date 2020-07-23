@@ -31,6 +31,40 @@ layout(std140) uniform MeshMatrixUniformData
 uniform vec4 materialColor;
 uniform int meshIndex;
 
+// Lights.
+
+struct AmbientLight
+{
+  vec4 color;
+};
+
+struct DirectionalLight
+{
+  vec4 color;
+  vec4 direction;
+};
+
+struct PointLight
+{
+  vec4 color;
+  vec4 position;
+};
+
+struct SpotLight
+{
+  vec4 color;
+  vec4 dirAndCutOff;
+  vec4 posAndInnerCutOff;
+};
+
+layout(std140) uniform LightUniformBlock
+{
+  AmbientLight ambientLight;
+  DirectionalLight directionalLight;
+  PointLight pointLight[100];
+  SpotLight spotLight[100];
+};
+
 /**
 * Vertex shader for SkeletalMesh.
 */
@@ -49,6 +83,17 @@ void main()
   mat3 matNormal = transpose(inverse(mat3(matModel)));
   outNormal = matNormal * vNormal;
   outPosition = vec3(matModel * vec4(vPosition, 1.0));
-  outShadowPosition = vec3(matShadow * vec4(outPosition, 1.0)) * 0.5 + vec3(0.5, 0.5, 0.5 - 0.0005);
+
+  // shadow bias(normal offset).
+  const float meterPerShadowMapPixel = 100.0 / 4096.0;
+  float cosTheta = 1.0 - clamp(dot(outNormal, -directionalLight.direction.xyz), 0.0, 1.0);
+  vec3 normalBias= outNormal * (2.0 * meterPerShadowMapPixel * cosTheta);
+
+  // shadow bias(z offset).
+  float zBias = meterPerShadowMapPixel * 0.05;
+
+  outShadowPosition = vec3(matShadow * matModel * vec4(vPosition + normalBias, 1.0)) * 0.5 + vec3(0.5);
+  outShadowPosition.z -= zBias;
+
   gl_Position = matMVP * matModel * vec4(vPosition, 1.0);
 }

@@ -17,6 +17,37 @@ uniform mat4 matMVP;
 uniform mat4 matModel;
 uniform mat4 matShadow;
 
+struct AmbientLight
+{
+  vec4 color;
+};
+
+struct DirectionalLight
+{
+  vec4 color;
+  vec4 direction;
+};
+
+struct PointLight
+{
+  vec4 color;
+  vec4 position;
+};
+
+struct SpotLight
+{
+  vec4 color;
+  vec4 dirAndCutOff;
+  vec4 posAndInnerCutOff;
+};
+
+layout(std140) uniform LightUniformBlock
+{
+  AmbientLight ambientLight;
+  DirectionalLight directionalLight;
+  PointLight pointLight[100];
+  SpotLight spotLight[100];
+};
 /**
 * Terrain vertex shader.
 */
@@ -32,9 +63,19 @@ void main()
   outTBN[2] = n;
 
   outTexCoord = vTexCoord;
-
   outPosition = vec3(matModel * vec4(vPosition, 1.0));
-  outShadowPosition = vec3(matShadow * vec4(outPosition, 1.0)) * 0.5 + vec3(0.5, 0.5, 0.5 - 0.0005);
+
+  // shadow bias(normal offset).
+  const float meterPerShadowMapPixel = 100.0 / 4096.0;
+  float cosTheta = 1.0 - clamp(dot(n, -directionalLight.direction.xyz), 0.0, 1.0);
+  vec3 normalBias= n * (2.0 * meterPerShadowMapPixel * cosTheta);
+
+  // shadow bias(z offset).
+  float zBias = meterPerShadowMapPixel * 0.01;
+
+  outShadowPosition = vec3(matShadow * vec4(outPosition + normalBias, 1.0)) * 0.5 + 0.5;
+  outShadowPosition.z -= zBias;
+
   outRawPosition = vPosition;
   gl_Position = matMVP * (matModel * vec4(vPosition, 1.0));
 }

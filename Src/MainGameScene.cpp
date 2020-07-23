@@ -195,6 +195,7 @@ bool MainGameScene::Initialize()
 
   lightBuffer.Init(1);
   lightBuffer.BindToShader(meshBuffer.GetStaticMeshShader());
+  lightBuffer.BindToShader(meshBuffer.GetSkeletalMeshShader());
   lightBuffer.BindToShader(meshBuffer.GetTerrainShader());
   lightBuffer.BindToShader(meshBuffer.GetWaterShader());
 
