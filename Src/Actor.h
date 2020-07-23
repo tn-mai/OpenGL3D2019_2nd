@@ -14,6 +14,11 @@
 class Actor;
 using ActorPtr = std::shared_ptr<Actor>;
 
+/**
+* アクターにライトの影響を受ける能力を付与する構造体.
+*
+* ライトを受けたいアクターはこれを包含または継承する.
+*/
 struct LightReceiver
 {
   void SetPointLightList(const std::vector<int>& v);
