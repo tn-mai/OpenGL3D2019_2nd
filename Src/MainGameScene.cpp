@@ -370,6 +370,35 @@ void MainGameScene::ProcessInput()
 }
 
 /**
+* ライトにライトを設定する.
+*
+* @param lightReceiver ライトを受けるレシーバーオブジェクト.
+* @param position      レシーバーオブジェクトの座標.
+* @param lights        ライトリスト.
+*/
+void SetLight(LightReceiver& lightReceiver, const glm::vec3& position, const ActorList& lights)
+{
+  const std::vector<ActorPtr> neighborhood = lights.FindNearbyActors(position, 20);
+  std::vector<int> pointLightIndex;
+  std::vector<int> spotLightIndex;
+  pointLightIndex.reserve(neighborhood.size());
+  spotLightIndex.reserve(neighborhood.size());
+  for (auto light : neighborhood) {
+    if (PointLightActorPtr p = std::dynamic_pointer_cast<PointLightActor>(light)) {
+      if (pointLightIndex.size() < 8) {
+        pointLightIndex.push_back(p->index);
+      }
+    } else if (SpotLightActorPtr p = std::dynamic_pointer_cast<SpotLightActor>(light)) {
+      if (spotLightIndex.size() < 8) {
+        spotLightIndex.push_back(p->index);
+      }
+    }
+  }
+  lightReceiver.SetPointLightList(pointLightIndex);
+  lightReceiver.SetSpotLightList(spotLightIndex);
+}
+
+/**
 * シーンを更新する.
 *
 * @param deltaTime  前回の更新からの経過時間(秒).
@@ -437,26 +466,9 @@ void MainGameScene::Update(float deltaTime)
 
   // ライトの更新.
   lightBuffer.Update(lights, glm::vec3(0.1f, 0.05f, 0.15f));
+  SetLight(static_cast<LightReceiver&>(*player), player->position, lights);
   for (auto e : trees) {
-    const std::vector<ActorPtr> neighborhood = lights.FindNearbyActors(e->position, 20);
-    std::vector<int> pointLightIndex;
-    std::vector<int> spotLightIndex;
-    pointLightIndex.reserve(neighborhood.size());
-    spotLightIndex.reserve(neighborhood.size());
-    for (auto light : neighborhood) {
-      if (PointLightActorPtr p = std::dynamic_pointer_cast<PointLightActor>(light)) {
-        if (pointLightIndex.size() < 8) {
-          pointLightIndex.push_back(p->index);
-        }
-      } else if (SpotLightActorPtr p = std::dynamic_pointer_cast<SpotLightActor>(light)) {
-        if (spotLightIndex.size() < 8) {
-          spotLightIndex.push_back(p->index);
-        }
-      }
-    }
-    StaticMeshActorPtr p = std::static_pointer_cast<StaticMeshActor>(e);
-    p->SetPointLightList(pointLightIndex);
-    p->SetSpotLightList(spotLightIndex);
+    SetLight(static_cast<StaticMeshActor&>(*e), e->position, lights);
   }
 
   particleSystem.Update(Collision::CreateFrustum(camera), deltaTime);
