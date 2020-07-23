@@ -66,6 +66,9 @@ void main()
   vec3 lightColor = ambientLight.color.rgb;
 
   vec3 normal = normalize(inNormal);
+  if (gl_FrontFacing == false) {
+    normal = -normal;
+  }
 
   float shadow = texture(texShadow, inShadowPosition) * 0.75 + 0.25;
   float power = max(dot(normal, -directionalLight.direction.xyz), 0.0);
