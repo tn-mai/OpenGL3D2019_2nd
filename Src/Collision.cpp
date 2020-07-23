@@ -454,6 +454,7 @@ Result TestCapsuleAABB(const Capsule& c, const AABB& aabb)
     result.na = glm::normalize(c1 - c0);
     result.pa = c0 + result.na * c.r;
     result.pb = c1;
+    result.nb = -result.na;
     return result;
   }
 
