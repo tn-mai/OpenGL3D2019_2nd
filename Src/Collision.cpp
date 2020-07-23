@@ -2,6 +2,7 @@
 * @file Collision.cpp
 */
 #include "Collision.h"
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <vector>
 #include <math.h>
@@ -58,6 +59,41 @@ Shape CreateOBB(const glm::vec3& center, const glm::vec3& axisX,
   result.obb = OrientedBoundingBox{ center,
     { normalize(axisX), normalize(axisY), normalize(axisZ) }, e };
   return result;
+}
+
+/**
+* 錘台を作成する.
+*
+* @param camera 錘台の元になるカメラオブジェクト.
+*/
+Frustum CreateFrustum(const Camera& camera)
+{
+  const glm::vec3 axisZ = glm::normalize(camera.target - camera.position);
+  const glm::vec3 axisX = glm::normalize(glm::cross(axisZ, camera.up));
+  const glm::vec3 axisY = glm::normalize(glm::cross(axisX, axisZ));
+
+  const glm::vec3 nc = camera.position + axisZ * camera.near;
+  const glm::vec3 fc = camera.position + axisZ * camera.far;
+
+  Frustum frustum;
+  frustum.planes[Frustum::nearPlane] = Plane{ nc, axisZ };
+  frustum.planes[Frustum::farPlane] = Plane{ fc, -axisZ };
+
+  const float tanY = std::tan(camera.fov * 0.5f);
+  const float nh = camera.near * tanY;
+  const float nw = nh * (camera.width / camera.height);
+
+  glm::vec3 aux = glm::normalize((nc + axisY * nh) - camera.position);
+  frustum.planes[Frustum::topPlane] = Plane{ nc + axisY * nh, glm::normalize(glm::cross(aux, axisX)) };
+  aux = glm::normalize((nc - axisY * nh) - camera.position);
+  frustum.planes[Frustum::bottomPlane] = Plane{ nc - axisY * nh, glm::normalize(glm::cross(axisX, aux)) };
+
+  aux = glm::normalize((nc - axisX * nw) - camera.position);
+  frustum.planes[Frustum::leftPlane] = Plane{ nc - axisX * nw, glm::normalize(glm::cross(aux, axisY)) };
+  aux = glm::normalize((nc + axisX * nw) - camera.position);
+  frustum.planes[Frustum::rightPlane] = Plane{ nc + axisX * nw, glm::normalize(glm::cross(axisY, aux)) };
+
+  return frustum;
 }
 
 /**
@@ -524,11 +560,6 @@ enum Face {
   minusX,
   minusY,
   minusZ,
-};
-
-struct Plane {
-  glm::vec3 p;
-  glm::vec3 n;
 };
 
 struct FaceQuery {
@@ -1227,6 +1258,146 @@ bool Test()
   printf("IntersectRayAABB 2: ");
   local::test(IntersectRayAABB(p2, d2, aabb, tmin, q), true);
 #undef TEST
+  return true;
+}
+
+/**
+*
+*/
+ViewFrustum2::ViewFrustum2(const glm::vec3& eye, const glm::vec3& target, const glm::vec3& up, float fov, float aspectRatio, float near, float far)
+{
+  position = eye;
+  axis[2] = glm::normalize(target - eye);
+  axis[2].z *= -1.0f;
+  axis[0] = glm::normalize(glm::cross(up, axis[2]));
+  axis[1] = glm::normalize(glm::cross(axis[2], axis[0]));
+  tanY = std::tan(fov * 0.5f);
+  this->aspectRatio = aspectRatio;
+  sphereFactor.y = 1.0f / std::cos(fov * 0.5f);
+  sphereFactor.x = 1.0f / std::cos(std::atan(tanY * aspectRatio));
+  this->near = near;
+  this->far = far;
+}
+
+/**
+*
+*/
+bool ViewFrustum2::Test(const Sphere& sphere) const
+{
+  glm::vec3 v = sphere.center - position;
+  v.z = -v.z;
+  const float z = glm::dot(v, axis[2]);
+  // nearより手前、またはfarより奥にある場合は衝突なし.
+  if (z < near - sphere.r || z > far + sphere.r) {
+    return false;
+  }
+
+  const glm::vec2 d = sphereFactor * sphere.r;
+
+  const float y = glm::dot(v, axis[1]);
+  const float fy = (z * tanY) + d.y;
+  if (y > fy || y < -fy) {
+    return false;
+  }
+
+  const float x = glm::dot(v, axis[0]);
+  const float fx = (z * tanY * aspectRatio) + d.x;
+  if (x > fx || x < -fx) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+* コンストラクタ.
+*
+* @param camera 錘台の元になるカメラオブジェクト.
+*/
+Frustum::Frustum(const Camera& camera)
+{
+  const glm::vec3 axisZ = glm::normalize(camera.target - camera.position);
+  const glm::vec3 axisX = glm::normalize(glm::cross(axisZ, camera.up));
+  const glm::vec3 axisY = glm::normalize(glm::cross(axisX, axisZ));
+
+  const glm::vec3 nc = camera.position + axisZ * camera.near;
+  const glm::vec3 fc = camera.position + axisZ * camera.far;
+  planes[nearPlane] = Plane{ nc, axisZ };
+  planes[farPlane] = Plane{ fc, -axisZ };
+
+  const float tanY = std::tan(camera.fov * 0.5f);
+  const float nh = camera.near * tanY;
+  const float nw = nh * (camera.width / camera.height);
+
+  glm::vec3 aux = glm::normalize((nc + axisY * nh) - camera.position);
+  planes[topPlane] = Plane{ nc + axisY * nh, glm::normalize(glm::cross(aux, axisX)) };
+  aux = glm::normalize((nc - axisY * nh) - camera.position);
+  planes[bottomPlane] = Plane{ nc - axisY * nh, glm::normalize(glm::cross(axisX, aux)) };
+
+  aux = glm::normalize((nc - axisX * nw) - camera.position);
+  planes[leftPlane] = Plane{ nc - axisX * nw, glm::normalize(glm::cross(aux, axisY)) };
+  aux = glm::normalize((nc + axisX * nw) - camera.position);
+  planes[rightPlane] = Plane{ nc + axisX * nw, glm::normalize(glm::cross(axisY, aux)) };
+}
+
+/**
+* コンストラクタ.
+*
+* @param camera 錘台の元になるカメラオブジェクト.
+*/
+Frustum::Frustum(const Camera& camera, float left, float right, float bottom, float top, float near, float far)
+{
+  const glm::vec3 axisZ = glm::normalize(camera.target - camera.position);
+  const glm::vec3 axisX = glm::normalize(glm::cross(axisZ, camera.up));
+  const glm::vec3 axisY = glm::normalize(glm::cross(axisX, axisZ));
+
+  planes[nearPlane] = Plane{ camera.position + axisZ * near, axisZ };
+  planes[farPlane] = Plane{ camera.position + axisZ * far, -axisZ };
+  planes[topPlane] = Plane{ camera.position + axisY * top, -axisY };
+  planes[bottomPlane] = Plane{ camera.position + axisY * bottom, axisY };
+  planes[leftPlane] = Plane{ camera.position + axisX * left, axisX };
+  planes[rightPlane] = Plane{ camera.position + axisX * right, -axisX };
+}
+
+/**
+* 錘台と点が衝突しているか調べる.
+*
+* @param frustum 錘台.
+* @param point   点.
+*
+* @retval true  衝突している.
+* @retval false 衝突していない.
+*/
+bool Test(const Frustum& frustum, const glm::vec3& point)
+{
+  for (const auto& e : frustum.planes) {
+    const glm::vec3 v(point - e.p);
+    const float d = glm::dot(v, e.n);
+    if (d < 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+* 錘台と球が衝突しているか調べる.
+*
+* @param frustum 錘台.
+* @param sphere  球.
+*
+* @retval true  衝突している.
+* @retval false 衝突していない.
+*/
+bool Test(const Frustum& frustum, const Sphere& sphere)
+{
+  for (const auto& e : frustum.planes) {
+    const glm::vec3 v(sphere.center - e.p);
+    const float d = glm::dot(v, e.n);
+    if (d < -sphere.r) {
+      return false;
+    }
+  }
   return true;
 }
 

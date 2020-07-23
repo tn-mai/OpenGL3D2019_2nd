@@ -8,6 +8,7 @@
 #include "BufferObject.h"
 #include "Shader.h"
 #include "Sprite.h"
+#include "Collision.h"
 #include <glm/glm.hpp>
 #include <list>
 #include <memory>
@@ -168,7 +169,7 @@ public:
   ParticleEmitterPtr Find(int id) const;
   void Remove(const ParticleEmitterPtr&);
   void Clear();
-  void Update(float deltatime);
+  void Update(const Collision::Frustum& frustum, float deltatime);
   void Draw(const glm::mat4& matProj, const glm::mat4& matView);
 
 private:

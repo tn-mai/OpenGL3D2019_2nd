@@ -380,7 +380,6 @@ void MainGameScene::Update(float deltaTime)
   enemies.Update(deltaTime);
   trees.Update(deltaTime);
   objects.Update(deltaTime);
-  lights.Update(deltaTime);
 
   DetectCollision(player, enemies);
   DetectCollision(player, trees);
@@ -409,6 +408,8 @@ void MainGameScene::Update(float deltaTime)
     }
   }
 
+  lights.Update(deltaTime);
+
   // カメラの状態を更新.
   {
     const float distance = 15.0f;
@@ -418,7 +419,7 @@ void MainGameScene::Update(float deltaTime)
     camera.target = player->position + glm::vec3(0, 1.2f, 0);
     camera.position = camera.target + offset;
     camera.fNumber = 4.4f;
-    camera.fov = glm::radians(60.0f);
+    camera.fov = glm::radians(30.0f);
   }
 
   // 死亡アニメーションの終わった敵を消す.
@@ -458,7 +459,7 @@ void MainGameScene::Update(float deltaTime)
     p->SetSpotLightList(spotLightIndex);
   }
 
-  particleSystem.Update(deltaTime);
+  particleSystem.Update(Collision::CreateFrustum(camera), deltaTime);
 
   // 敵を全滅させたら目的達成フラグをtrueにする.
   if (jizoId >= 0) {
@@ -516,7 +517,7 @@ void MainGameScene::Update(float deltaTime)
 /**
 * メッシュを描画する.
 */
-void MainGameScene::RenderMesh(Mesh::DrawType drawType)
+void MainGameScene::RenderMesh(Mesh::DrawType drawType, const Collision::Frustum* pFrustum)
 {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
@@ -528,10 +529,17 @@ void MainGameScene::RenderMesh(Mesh::DrawType drawType)
   Mesh::Draw(meshBuffer.GetFile("Terrain"), glm::mat4(1), drawType);
 
   player->Draw(drawType);
-  enemies.Draw(drawType);
-  objects.Draw(drawType);
-  glDisable(GL_CULL_FACE);
-  trees.Draw(drawType);
+  if (!pFrustum) {
+    enemies.Draw(drawType);
+    objects.Draw(drawType);
+    glDisable(GL_CULL_FACE);
+    trees.Draw(drawType);
+  } else {
+    enemies.Draw(*pFrustum, drawType);
+    objects.Draw(*pFrustum, drawType);
+    glDisable(GL_CULL_FACE);
+    trees.Draw(*pFrustum, drawType);
+  }
 
   glm::vec3 treePos(110, 0, 110);
   treePos.y = heightMap.Height(treePos);
@@ -583,7 +591,10 @@ void MainGameScene::Render()
 
     // ビュー・プロジェクション行列を設定してメッシュを描画.
     meshBuffer.SetShadowViewProjectionMatrix(matProj * matView);
-    RenderMesh(Mesh::DrawType::shadow);
+    Camera shadowCamera = camera;
+    shadowCamera.position = position;
+    const Collision::Frustum viewFrustum(shadowCamera, -width / 2, width / 2, -height / 2, height / 2, near, far);
+    RenderMesh(Mesh::DrawType::shadow, &viewFrustum);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, fboMain->GetFramebuffer());
@@ -605,13 +616,15 @@ void MainGameScene::Render()
   const float aspectRatio =
     static_cast<float>(window.Width()) / static_cast<float>(window.Height());
   const glm::mat4 matProj =
-    glm::perspective(camera.fov * 0.5f, aspectRatio, camera.near, camera.far);
+    glm::perspective(camera.fov, aspectRatio, camera.near, camera.far);
   meshBuffer.SetViewProjectionMatrix(matProj * matView);
   meshBuffer.SetCameraPosition(camera.position);
   meshBuffer.SetTime(window.Time());
   meshBuffer.BindShadowTexture(fboShadow->GetDepthTexture());
 
-  RenderMesh(Mesh::DrawType::color);
+
+  const Collision::Frustum viewFrustum = Collision::CreateFrustum(camera);
+  RenderMesh(Mesh::DrawType::color, &viewFrustum);
   particleSystem.Draw(matProj, matView);
 
   meshBuffer.UnbindShadowTexture();

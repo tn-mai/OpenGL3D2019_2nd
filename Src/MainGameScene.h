@@ -37,7 +37,7 @@ public:
   bool HandleJizoEffects(int id, const glm::vec3& pos);
 
 private:
-  void RenderMesh(Mesh::DrawType);
+  void RenderMesh(Mesh::DrawType, const Collision::Frustum* = nullptr);
 
   std::mt19937 rand;
   int jizoId = -1; ///< Œ»Ýí“¬’†‚Ì‚¨’n‘ —l‚ÌID.

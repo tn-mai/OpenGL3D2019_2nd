@@ -47,12 +47,15 @@ void Actor::Update(float deltaTime)
   case Collision::Shape::Type::sphere:
     colWorld.s.center = matModel * glm::vec4(colLocal.s.center, 1);
     colWorld.s.r = colLocal.s.r;
+    bounds = colWorld.s;
     break;
 
   case Collision::Shape::Type::capsule:
     colWorld.c.seg.a = matModel * glm::vec4(colLocal.c.seg.a, 1);
     colWorld.c.seg.b = matModel * glm::vec4(colLocal.c.seg.b, 1);
     colWorld.c.r = colLocal.c.r;
+    bounds.center = (colWorld.c.seg.a + colWorld.c.seg.b) * 0.5f;
+    bounds.r = glm::length(colWorld.c.seg.b - colWorld.c.seg.a) * 0.5f + colWorld.c.r;
     break;
 
   case Collision::Shape::Type::obb:
@@ -61,6 +64,8 @@ void Actor::Update(float deltaTime)
       colWorld.obb.axis[i] = matR_XZY * glm::vec4(colLocal.obb.axis[i], 1);
     }
     colWorld.obb.e = colLocal.obb.e;
+    bounds.center = colWorld.obb.center;
+    bounds.r = glm::length(colWorld.obb.e);
     break;
   }
 }
@@ -274,6 +279,23 @@ void ActorList::Draw(Mesh::DrawType drawType)
   for (const ActorPtr& e : actors) {
     if (e && e->health > 0) {
       e->Draw(drawType);
+    }
+  }
+}
+
+/**
+* Actor‚ð•`‰æ‚·‚é.
+*
+* @param frustum  Ž‹‘ä.
+* @param drawType •`‰æ‚·‚éƒf[ƒ^‚ÌŽí—Þ.
+*/
+void ActorList::Draw(const Collision::Frustum& frustum, Mesh::DrawType drawType)
+{
+  for (const ActorPtr& e : actors) {
+    if (e && e->health > 0) {
+      if (Collision::Test(frustum, e->bounds)) {
+        e->Draw(drawType);
+      }
     }
   }
 }

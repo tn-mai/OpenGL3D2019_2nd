@@ -276,9 +276,10 @@ void ParticleSystem::Clear()
 /**
 * パーティクルの状態を更新する.
 *
+* @param frustum    描画範囲を表す視錐台.
 * @param deltaTime  前回の更新からの経過時間(秒).
 */
-void ParticleSystem::Update(float deltaTime)
+void ParticleSystem::Update(const Collision::Frustum& frustum, float deltaTime)
 {
   for (auto& e : emitters) {
     e->Update(deltaTime);
@@ -290,6 +291,9 @@ void ParticleSystem::Update(float deltaTime)
   for (auto& e : emitters) {
     e->baseVertex = vertices.size();
     e->count = 0;
+    if (!Collision::Test(frustum, e->Position())) {
+      continue;
+    }
     for (auto& particle : e->particles) {
       // 座標変換行列を作成.
       const glm::mat4 matR =
