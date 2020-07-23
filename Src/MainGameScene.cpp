@@ -70,6 +70,7 @@ bool MainGameScene::Initialize()
 
   meshBuffer.Init(1'000'000 * sizeof(Mesh::Vertex), 3'000'000 * sizeof(GLushort));
   meshBuffer.LoadMesh("Res/red_pine_tree.gltf");
+  meshBuffer.LoadMesh("Res/black_pine_trees_3.gltf");
   meshBuffer.LoadMesh("Res/jizo_statue.gltf");
   meshBuffer.LoadSkeletalMesh("Res/bikuni.gltf");
   meshBuffer.LoadSkeletalMesh("Res/oni_small.gltf");
@@ -321,20 +322,23 @@ bool MainGameScene::Initialize()
   {
     const size_t treeCount = 200;
     trees.Reserve(treeCount);
-    const Mesh::FilePtr mesh = meshBuffer.GetFile("Res/red_pine_tree.gltf");
+    const Mesh::FilePtr meshBlack = meshBuffer.GetFile("Res/black_pine_trees_3.gltf");
+    const Mesh::FilePtr meshRed = meshBuffer.GetFile("Res/red_pine_tree.gltf");
     for (size_t i = 0; i < treeCount; ++i) {
       // 位置を(50,50)-(150,150)の範囲からランダムに選択.
       glm::vec3 position(0);
-      position.x = std::uniform_real_distribution<float>(80, 120)(rand);
-      position.z = std::uniform_real_distribution<float>(80, 120)(rand);
+      position.x = std::uniform_real_distribution<float>(20, 180)(rand);
+      position.z = std::uniform_real_distribution<float>(20, 180)(rand);
       position.y = heightMap.Height(position);
       // 向きをランダムに選択.
       glm::vec3 rotation(0);
-      rotation.y = std::uniform_real_distribution<float>(0, glm::pi<float>() * 2)(rand);
+      rotation.y = std::uniform_real_distribution<float>(0, glm::radians(360.0f))(rand);
+      rotation.x = std::uniform_real_distribution<float>(glm::radians(-10.0f), glm::radians(10.0f))(rand);
+      glm::vec3 scale(std::normal_distribution<float>(0, 1)(rand) * 0.10f + 1.0f);
       StaticMeshActorPtr p = std::make_shared<StaticMeshActor>(
-        mesh, "RedPineTree", 13, position, rotation);
+        (rand() % 3) >= 2 ? meshRed : meshBlack, "PineTree", 13, position, rotation, scale);
       p->colLocal = Collision::CreateCapsule(
-        glm::vec3(0, 0, 0), glm::vec3(0, 3, 0), 0.5f);
+        glm::vec3(0, 0, 0), glm::vec3(0, 3, 0), 1.0f);
       trees.Add(p);
     }
   }
