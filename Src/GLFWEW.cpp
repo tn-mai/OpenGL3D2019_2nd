@@ -112,8 +112,13 @@ bool Window::Init(int w, int h, const char* title)
   const GLubyte* shading_language_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
   std::cout << "Shading_language_version: " << shading_language_version << std::endl;
 
-  const GLubyte* extensions = glGetString(GL_EXTENSIONS);
-  std::cout << "Extensions: " << extensions << std::endl;
+  std::cout << "Extensions:\n";
+  GLint numExtension;
+  glGetIntegerv(GL_NUM_EXTENSIONS, &numExtension);
+  for (GLint i = 0; i < numExtension; ++i) {
+    const GLubyte* extensions = glGetStringi(GL_EXTENSIONS, i);
+    std::cout << "  " << extensions << "\n";
+  }
 
   // 前方互換性コアプロファイルを指定すると、GLFW, GLEWの初期化でエラーが報告されるので、ここで無理やり消す.
   // 当面、実害はないようだが、将来的にはライブラリを最新版に置き換える必要があるだろう.
@@ -132,6 +137,7 @@ bool Window::Init(int w, int h, const char* title)
   PrintGLInfo(GL_MAX_UNIFORM_BUFFER_BINDINGS); // 最小36/72
   PrintGLInfo(GL_MAX_VERTEX_UNIFORM_VECTORS); // 最小256/256
   PrintGLInfo(GL_MAX_FRAGMENT_UNIFORM_VECTORS); // 最小256/256
+  PrintGLInfo(GL_MAX_TEXTURE_BUFFER_SIZE); // 最小65536=64kb
 #undef PrintGLInfo
 
   std::cout << "GLEW Version: " << glewGetString(GLEW_VERSION) << "\n";
