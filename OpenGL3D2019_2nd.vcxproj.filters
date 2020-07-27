@@ -284,6 +284,12 @@
     <None Include="Res\Particle.vert">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="Res\Grass.frag">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Res\Grass.vert">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Res\FireParticle.tga">

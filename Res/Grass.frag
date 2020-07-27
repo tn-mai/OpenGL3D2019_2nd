@@ -55,11 +55,14 @@ layout(std140) uniform LightUniformBlock
 void main()
 {
   fragColor = texture(texColor, inTexCoord);
+// 草はポリゴン形状そのままでも見た目が気にならなかったので透過discardは消す.
 //  if (fragColor.a < 0.25) {
 //    discard;
 //  }
 
   vec3 normal = normalize(inNormal);
+
+// 両面化のため裏面判定を色々試した結果、法線を上に向ければ見た目もよく法線反転も必要ないという結論に至った.
 #if 0
   vec3 fdx = dFdx(gl_FragCoord.xyz);
   vec3 fdy = dFdy(gl_FragCoord.xyz);
@@ -73,9 +76,6 @@ void main()
   }
 #endif
 
-#if 0
-  fragColor.rgb *= texture(texShadow, inShadowPosition) * 0.75 + 0.25;
-#else
   vec3 lightColor = ambientLight.color.rgb;
   float shadow = texture(texShadow, inShadowPosition) * 0.75 + 0.25;
   float power = max(dot(normal, -directionalLight.direction.xyz), 0.0);
@@ -115,5 +115,4 @@ void main()
   }
 
   fragColor.rgb *= lightColor;
-#endif
 }

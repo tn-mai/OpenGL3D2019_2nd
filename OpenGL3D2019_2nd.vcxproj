@@ -236,6 +236,8 @@
     <None Include="Res\DepthOfField.frag" />
     <None Include="Res\DepthOfField.vert" />
     <None Include="Res\GaussianBlur9.frag" />
+    <None Include="Res\Grass.frag" />
+    <None Include="Res\Grass.vert" />
     <None Include="Res\Particle.vert" />
     <None Include="Res\Shadow.frag" />
     <None Include="Res\NonTexturedShadow.frag" />

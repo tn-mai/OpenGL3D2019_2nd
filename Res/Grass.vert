@@ -82,7 +82,7 @@ void main()
 
   outTexCoord = vTexCoord;
 
-#if 1
+#if 0
   vec4 pos = vec4(vPosition + vec3(x, 0, z) + vec3(0.5, 0, 0.5), 1);
   vec2 invMapSize = vec2(1) / vec2(mapSize);
   vec2 tcGrassHeightMap = vec2(pos.x, float(mapSize.y) - pos.z) * invMapSize;

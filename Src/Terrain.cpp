@@ -329,9 +329,6 @@ void HeightMap::UpdateGrass(const Collision::Frustum& frustum)
   data.reserve(texGrassInstanceData->Size());
   for (int z = 0; z < size.y - 1; ++z) {
     for (int x = 0; x < size.x - 1; ++x) {
-#if 0
-      data.push_back(InstanceData{ (uint8_t)x, (uint8_t)z, 255, 0 });
-#else
       const int n = z * (size.y - 1) + x;
       const uint8_t grassHeight = grassHeights[n].grassHeight;
       if (grassHeight < 1) {
@@ -342,7 +339,6 @@ void HeightMap::UpdateGrass(const Collision::Frustum& frustum)
       if (Collision::Test(frustum, Collision::Sphere{p, 1.3f})) {
         data.push_back(InstanceData{ static_cast<uint8_t>(x), static_cast<uint8_t>(z), 0, 0 });
       }
-#endif
     }
   }
   grassInstanceCount = data.size();
