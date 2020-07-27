@@ -30,6 +30,12 @@ bool HeightMap::LoadFromFile(const char* path, float scale, float baseLevel)
     return false;
   }
 
+  texHeightMap = Texture::Image2D::Create(path);
+  texGrassHeightMap = Texture::Image2D::Create("Res/Terrain_Ratio.tga");
+
+  const GLuint grassCount = (texHeightMap->Width() - 1) * (texHeightMap->Height() - 1);
+  texGrassInstanceData = Texture::Buffer::Create(GL_RGBA8UI, grassCount * 4, nullptr, GL_STREAM_DRAW);
+
   name = path;
 
   // 画像の大きさを保存.
@@ -42,6 +48,27 @@ bool HeightMap::LoadFromFile(const char* path, float scale, float baseLevel)
     for (int x = 0; x < size.x; ++x) {
       const glm::vec4 color = imageData.GetColor(x, y);
       heights[offsetY * size.x + x] = (color.r - baseLevel) * scale;
+    }
+  }
+
+  // 草丈マップを作成.
+  {
+    Texture::ImageData imageData;
+    if (!Texture::LoadImage2D("Res/Terrain_Ratio.tga", &imageData)) {
+      std::cerr << "[エラー]" << __func__ << ": 地形レシオマップを読み込めませんでした.\n";
+      return false;
+    }
+
+    grassHeights.resize(imageData.data.size());
+    for (int y = 0; y < imageData.height; ++y) {
+      const int offsetY = (imageData.height - 1) - y; // 上下反転.
+      for (int x = 0; x < imageData.width; ++x) {
+        const glm::vec4 color = imageData.GetColor(x, y);
+        grassHeights[offsetY * imageData.width + x] = {
+          static_cast<uint8_t>(glm::clamp(color.g * 255, 0.0f, 255.0f)),
+          Height(glm::vec3(x + 0.5f, 0, offsetY + 0.5f))
+        };
+      }
     }
   }
 
@@ -255,6 +282,71 @@ bool HeightMap::CreateWaterMesh(Mesh::Buffer& meshBuffer, const char* meshName, 
   meshBuffer.AddMesh(meshName, p, m);
 
   return true;
+}
+
+/**
+* メッシュに草シェーダを割り当てる.
+*
+* @param meshBuffer メッシュ取得元のメッシュバッファ.
+* @param meshName   メッシュファイル名.
+*/
+void HeightMap::SetupGrassShader(const Mesh::Buffer& meshBuffer, const char* meshName) const
+{
+  // 割り当て先のメッシュを取得.
+  Mesh::FilePtr mesh = meshBuffer.GetFile(meshName);
+  if (!mesh) {
+    return;
+  }
+
+  // 0番目のマテリアルを取得.
+  Mesh::Material& m = mesh->materials[0];
+
+  // マテリアル0番に草シェーダを割り当てる.
+  m.program = meshBuffer.GetGrassShader();
+  m.progShadow = meshBuffer.GetGrassShadowShader();
+
+  // マテリアル0番に高さマップとインスタンスデータを割り当てる.
+  m.texture[1] = texHeightMap;
+  m.texture[2] = texGrassHeightMap;
+  m.texture[3] = texGrassInstanceData;
+
+  // マテリアル0番にライトインデックスバッファを割り当てる.
+  m.texture[4] = lightIndex[0];
+  m.texture[5] = lightIndex[1];
+}
+
+/**
+* 草インスタンスデータバッファを更新する.
+*
+* @param frustum 表示範囲を表す視錐台.
+*/
+void HeightMap::UpdateGrass(const Collision::Frustum& frustum)
+{
+  struct InstanceData {
+    uint8_t x, y, z, w;
+  };
+  std::vector<InstanceData> data;
+  data.reserve(texGrassInstanceData->Size());
+  for (int z = 0; z < size.y - 1; ++z) {
+    for (int x = 0; x < size.x - 1; ++x) {
+#if 0
+      data.push_back(InstanceData{ (uint8_t)x, (uint8_t)z, 255, 0 });
+#else
+      const int n = z * (size.y - 1) + x;
+      const uint8_t grassHeight = grassHeights[n].grassHeight;
+      if (grassHeight < 1) {
+        continue;
+      }
+      glm::vec3 p(x + 0.5f, 0, z + 0.5f);
+      p.y = grassHeights[n].height + 0.5f;
+      if (Collision::Test(frustum, Collision::Sphere{p, 1.3f})) {
+        data.push_back(InstanceData{ static_cast<uint8_t>(x), static_cast<uint8_t>(z), 0, 0 });
+      }
+#endif
+    }
+  }
+  grassInstanceCount = data.size();
+  texGrassInstanceData->BufferSubData(0, data.size() * 4, data.data());
 }
 
 /**

@@ -29,14 +29,27 @@ public:
   const glm::ivec2& Size() const;
   bool CreateMesh(Mesh::Buffer& meshBuffer,
     const char* meshName, const char* texName = nullptr) const;
-  bool CreateWaterMesh(Mesh::Buffer& meshBuffer, const char* meshName, float waterLevel) const;
+  bool CreateWaterMesh(Mesh::Buffer& meshBuffer,
+    const char* meshName, float waterLevel) const;
+  void SetupGrassShader(const Mesh::Buffer& meshBuffer, const char* meshName) const;
   void UpdateLightIndex(const ActorList& lights);
+  void UpdateGrass(const Collision::Frustum& frustum);
+  size_t GetGrassInstanceCount() const { return grassInstanceCount; }
 
 private:
   std::string name;                ///< 元になった画像ファイル名.
   glm::ivec2 size = glm::ivec2(0); ///< ハイトマップの大きさ.
   std::vector<float> heights;      ///< 高さデータ.
+  struct GrassInfo {
+    uint8_t grassHeight; // 草丈.
+    float height;        // 地面の高さ.
+  };
+  std::vector<GrassInfo> grassHeights;
   Texture::BufferPtr lightIndex[2];
+  Texture::Image2DPtr texHeightMap;
+  Texture::Image2DPtr texGrassHeightMap; ///< 草丈マップテクスチャ.
+  Texture::BufferPtr texGrassInstanceData;
+  size_t grassInstanceCount = 0;
 
   glm::vec3 CalcNormal(int x, int z) const;
 };

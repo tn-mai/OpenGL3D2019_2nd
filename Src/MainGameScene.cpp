@@ -75,6 +75,7 @@ bool MainGameScene::Initialize()
   meshBuffer.LoadSkeletalMesh("Res/bikuni.gltf");
   meshBuffer.LoadSkeletalMesh("Res/oni_small.gltf");
   meshBuffer.LoadMesh("Res/wall_stone.gltf");
+  meshBuffer.LoadMesh("Res/grass.gltf");
 
   // FBOを作成する.
   const GLFWEW::Window& window = GLFWEW::Window::Instance();
@@ -161,6 +162,7 @@ bool MainGameScene::Initialize()
   if (!heightMap.CreateWaterMesh(meshBuffer, "Water", -15)) {
     return false;
   }
+  heightMap.SetupGrassShader(meshBuffer, "Res/grass.gltf");
 
   // パーティクル・システムを初期化する.
   particleSystem.Init(10000);
@@ -198,6 +200,7 @@ bool MainGameScene::Initialize()
   lightBuffer.BindToShader(meshBuffer.GetSkeletalMeshShader());
   lightBuffer.BindToShader(meshBuffer.GetTerrainShader());
   lightBuffer.BindToShader(meshBuffer.GetWaterShader());
+  lightBuffer.BindToShader(meshBuffer.GetGrassShader());
 
   glm::vec3 startPos(95, 0, 105);
   startPos.y = heightMap.Height(startPos);
@@ -531,6 +534,10 @@ void MainGameScene::Update(float deltaTime)
 */
 void MainGameScene::RenderMesh(Mesh::DrawType drawType, const Collision::Frustum* pFrustum)
 {
+  glDisable(GL_CULL_FACE);
+  const size_t instanceCount = heightMap.GetGrassInstanceCount();
+  Mesh::Draw(meshBuffer.GetFile("Res/grass.gltf"), glm::mat4(1), drawType, instanceCount);
+
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
@@ -634,8 +641,8 @@ void MainGameScene::Render()
   meshBuffer.SetTime(window.Time());
   meshBuffer.BindShadowTexture(fboShadow->GetDepthTexture());
 
-
   const Collision::Frustum viewFrustum = Collision::CreateFrustum(camera);
+  heightMap.UpdateGrass(viewFrustum);
   RenderMesh(Mesh::DrawType::color, &viewFrustum);
   particleSystem.Draw(matProj, matView);
 

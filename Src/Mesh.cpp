@@ -201,6 +201,14 @@ bool Buffer::Init(GLsizeiptr vboSize, GLsizeiptr iboSize)
   if (progWater->IsNull()) {
     return false;
   }
+  progGrass = Shader::Program::Create("Res/Grass.vert", "Res/Grass.frag");
+  if (progGrass->IsNull()) {
+    return false;
+  }
+  progGrassShadow = Shader::Program::Create("Res/Grass.vert", "Res/Shadow.frag");
+  if (progGrassShadow->IsNull()) {
+    return false;
+  }
 
   progShadow  = Shader::Program::Create("Res/StaticMesh.vert", "Res/Shadow.frag");
   progNonTexturedShadow  = Shader::Program::Create("Res/StaticMesh.vert", "Res/NonTexturedShadow.frag");
@@ -643,6 +651,8 @@ void Buffer::SetViewProjectionMatrix(const glm::mat4& matVP) const
   progTerrain->SetViewProjectionMatrix(matVP);
   progWater->Use();
   progWater->SetViewProjectionMatrix(matVP);
+  progGrass->Use();
+  progGrass->SetViewProjectionMatrix(matVP);
   glUseProgram(0);
 }
 
@@ -653,6 +663,7 @@ void Buffer::SetViewProjectionMatrix(const glm::mat4& matVP) const
 */
 void Buffer::SetShadowViewProjectionMatrix(const glm::mat4& matVP) const
 {
+  // 影以外のシェーダには影用VP行列として設定.
   progStaticMesh->Use();
   progStaticMesh->SetShadowViewProjectionMatrix(matVP);
   progSkeletalMesh->Use();
@@ -661,12 +672,18 @@ void Buffer::SetShadowViewProjectionMatrix(const glm::mat4& matVP) const
   progTerrain->SetShadowViewProjectionMatrix(matVP);
   progWater->Use();
   progWater->SetShadowViewProjectionMatrix(matVP);
+  progGrass->Use();
+  progGrass->SetShadowViewProjectionMatrix(matVP);
+
+  // 影シェーダには通常のVP行列として設定.
   progShadow->Use();
   progShadow->SetViewProjectionMatrix(matVP);
   progNonTexturedShadow->Use();
   progNonTexturedShadow->SetViewProjectionMatrix(matVP);
   progSkeletalShadow->Use();
   progSkeletalShadow->SetViewProjectionMatrix(matVP);
+  progGrassShadow->Use();
+  progGrassShadow->SetViewProjectionMatrix(matVP);
   glUseProgram(0);
 }
 
@@ -685,6 +702,8 @@ void Buffer::SetCameraPosition(const glm::vec3& pos) const
   progTerrain->SetCameraPosition(pos);
   progWater->Use();
   progWater->SetCameraPosition(pos);
+  progGrass->Use();
+  progGrass->SetCameraPosition(pos);
   glUseProgram(0);
 }
 
@@ -704,6 +723,12 @@ void Buffer::SetTime(double time) const
   progTerrain->SetTime(ftime);
   progWater->Use();
   progWater->SetTime(ftime);
+  progGrass->Use();
+  progGrass->SetTime(ftime);
+  progShadow->Use();
+  progShadow->SetTime(ftime);
+  progGrassShadow->Use();
+  progGrassShadow->SetTime(ftime);
   glUseProgram(0);
 }
 
@@ -734,11 +759,12 @@ void Buffer::UnbindShadowTexture()
 /**
 * メッシュを描画する.
 *
-* @param file 描画するファイル.
-* @param matM  描画に使用するモデル行列.
-* @param type  描画する
+* @param file          描画するファイル.
+* @param matM          描画に使用するモデル行列.
+* @param type          描画するシェーダの種類.
+* @param instanceCount 描画するインスタンス数.
 */
-void Draw(const FilePtr& file, const glm::mat4& matM, DrawType type)
+void Draw(const FilePtr& file, const glm::mat4& matM, DrawType type, size_t instanceCount)
 {
   if (!file || file->meshes.empty() || file->materials.empty()) {
     return;
@@ -779,7 +805,11 @@ void Draw(const FilePtr& file, const glm::mat4& matM, DrawType type)
         std::cout << "[エラー]" << std::hex << error << "\n";
       }
 
-      glDrawElementsBaseVertex(p.mode, p.count, p.type, p.indices, p.baseVertex);
+      if (instanceCount > 1) {
+        glDrawElementsInstancedBaseVertex(p.mode, p.count, p.type, p.indices, instanceCount, p.baseVertex);
+      } else {
+        glDrawElementsBaseVertex(p.mode, p.count, p.type, p.indices, p.baseVertex);
+      }
       p.vao->Unbind();
     }
   }

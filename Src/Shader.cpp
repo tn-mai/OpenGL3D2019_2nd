@@ -243,6 +243,19 @@ void Program::Reset(GLuint programId)
     glUniform1i(locTexShadow, shadowTextureBindingPoint);
   }
 
+  const GLint locTexHeightMap = glGetUniformLocation(id, "texHeightMap");
+  if (locTexHeightMap) {
+    glUniform1i(locTexHeightMap, 1);
+  }
+  const GLint locTexGrassHeightMap = glGetUniformLocation(id, "texGrassHeightMap");
+  if (locTexGrassHeightMap) {
+    glUniform1i(locTexGrassHeightMap, 2);
+  }
+  const GLint locTexInstanceData = glGetUniformLocation(id, "texInstanceData");
+  if (locTexInstanceData) {
+    glUniform1i(locTexInstanceData, 3);
+  }
+
   glUseProgram(0);
   if (GLenum error = glGetError()) {
     std::cout << "[ƒGƒ‰[]" << std::hex << error << "\n";
